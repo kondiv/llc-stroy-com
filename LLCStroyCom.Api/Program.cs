@@ -1,4 +1,6 @@
+using LLCStroyCom.Domain.Repositories;
 using LLCStroyCom.Infrastructure;
+using LLCStroyCom.Infrastructure.Repositories;
 using LLCStroyCom.Infrastructure.Seeders;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,6 +12,12 @@ builder.Services.AddDbContext<StroyComDbContext>(options =>
 #region Seeders
 
 builder.Services.AddScoped<RoleSeeder>();
+
+#endregion
+
+#region Repositories
+
+builder.Services.AddSingleton<IUserRepository, UserRepository>();
 
 #endregion
 

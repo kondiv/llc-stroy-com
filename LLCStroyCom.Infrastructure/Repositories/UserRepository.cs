@@ -14,12 +14,15 @@ public class UserRepository : IUserRepository
         _context = context;
     }
     
-    public async Task CreateAsync(ApplicationUser user, CancellationToken cancellationToken = default)
+    public async Task<Guid> CreateAsync(ApplicationUser user, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(user);
+        
         try
         {
             await _context.Users.AddAsync(user, cancellationToken);
             await _context.SaveChangesAsync(cancellationToken);
+            return user.Id;
         }
         catch (Exception ex)
         {
@@ -28,6 +31,28 @@ public class UserRepository : IUserRepository
             
             throw new OperationCanceledException("User creating canceled");
         }
+    }
+
+    public async Task<ApplicationUser> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(email);
+        ArgumentException.ThrowIfNullOrEmpty(email);
+        ArgumentException.ThrowIfNullOrWhiteSpace(email);
+
+        return await _context.Users.FirstOrDefaultAsync(u => u.Email == email, cancellationToken)
+               ?? throw UserCouldNotBeFound.WithEmail(email);
+    }
+
+    public async Task AssignRefreshTokenAsync(Guid userId, RefreshToken refreshToken, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(refreshToken);
+        
+        var user = await _context.Users.FindAsync([userId], cancellationToken)
+            ?? throw UserCouldNotBeFound.WithId(userId);
+        
+        user.RefreshTokens.Add(refreshToken);
+        
+        await _context.SaveChangesAsync(cancellationToken);
     }
 
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)

@@ -1,6 +1,6 @@
-﻿using LLCStroyCom.Domain.Entities;
+﻿using LLCStroyCom.Domain.Constants;
+using LLCStroyCom.Domain.Entities;
 using LLCStroyCom.Infrastructure;
-using LLCStroyCom.Infrastructure.Constants;
 using LLCStroyCom.Infrastructure.Seeders;
 using Microsoft.EntityFrameworkCore;
 

@@ -7,4 +7,5 @@ public class ApplicationUser
     public string HashPassword { get; set; }
     public int RoleId { get; set; } = 0;
     public virtual ApplicationRole Role { get; set; } = null!;
+    public ICollection<RefreshToken> RefreshTokens { get; set; } = [];
 }

@@ -73,5 +73,43 @@ public class StroyComDbContext : DbContext
                 .HasMaxLength(255)
                 .HasColumnName("type");
         });
+
+        modelBuilder.Entity<RefreshToken>(entity =>
+        {
+            entity.ToTable("refresh_token");
+
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("uuid_generate_v4()")
+                .ValueGeneratedOnAdd()
+                .HasColumnName("id");
+
+            entity.Property(e => e.CreatedAt)
+                .IsRequired()
+                .HasDefaultValueSql("now()")
+                .ValueGeneratedOnAdd()
+                .HasColumnName("created_at");
+
+            entity.Property(e => e.ExpiresAt)
+                .IsRequired()
+                .HasColumnName("expires_at");
+
+            entity.Property(e => e.RevokedAt)
+                .HasColumnName("revoked_at");
+
+            entity.Property(e => e.TokenHash)
+                .IsRequired()
+                .HasColumnName("token_hash");
+            
+            entity.Property(e => e.UserId)
+                .IsRequired()
+                .HasColumnName("user_id");
+
+            entity.HasOne(rt => rt.User)
+                .WithMany(u => u.RefreshTokens)
+                .HasForeignKey(rt => rt.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
     }
 }

@@ -2,7 +2,7 @@ namespace LLCStroyCom.Domain.Exceptions;
 
 public class UserCouldNotBeFound : Exception
 {
-    public UserCouldNotBeFound(string message)
+    private UserCouldNotBeFound(string message)
         : base(message)
     {
         
@@ -11,5 +11,10 @@ public class UserCouldNotBeFound : Exception
     public static UserCouldNotBeFound WithId(Guid id)
     {
         return new UserCouldNotBeFound($"Could not find user with id: {id}");
+    }
+
+    public static UserCouldNotBeFound WithEmail(string email)
+    {
+        return new UserCouldNotBeFound($"Could not find user with email: {email}");
     }
 }

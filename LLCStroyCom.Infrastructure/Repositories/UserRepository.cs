@@ -33,22 +33,33 @@ public class UserRepository : IUserRepository
         }
     }
 
+    // TODO Write tests
+    public async Task<ApplicationUser> GetAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await _context.Users
+                   .Include(u => u.RefreshTokens)
+                   .Include(u => u.Role)
+                   .FirstOrDefaultAsync(u => u.Id == id, cancellationToken)
+               ?? throw UserCouldNotBeFound.WithId(id);
+    }
+
     public async Task<ApplicationUser> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(email);
         ArgumentException.ThrowIfNullOrEmpty(email);
         ArgumentException.ThrowIfNullOrWhiteSpace(email);
 
-        return await _context.Users.FirstOrDefaultAsync(u => u.Email == email, cancellationToken)
+        return await _context.Users
+                   .Include(u => u.Role)
+                   .FirstOrDefaultAsync(u => u.Email == email, cancellationToken)
                ?? throw UserCouldNotBeFound.WithEmail(email);
     }
 
     public async Task AssignRefreshTokenAsync(Guid userId, RefreshToken refreshToken, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(refreshToken);
-        
-        var user = await _context.Users.FindAsync([userId], cancellationToken)
-            ?? throw UserCouldNotBeFound.WithId(userId);
+
+        var user = await GetAsync(userId, cancellationToken);
         
         user.RefreshTokens.Add(refreshToken);
         
@@ -59,8 +70,7 @@ public class UserRepository : IUserRepository
     {
         try
         {
-            var user = await _context.Users.FindAsync(new object?[] { id, cancellationToken }, cancellationToken)
-                       ?? throw UserCouldNotBeFound.WithId(id);
+            var user = await GetAsync(id, cancellationToken);
             
             _context.Users.Remove(user);
             await _context.SaveChangesAsync(cancellationToken);

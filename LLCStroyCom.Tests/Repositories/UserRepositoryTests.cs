@@ -199,7 +199,13 @@ public class UserRepositoryTests
             HashPassword = "asdfasdfasdf",
             RoleId = 1
         };
+        var role = new ApplicationRole()
+        {
+            Id = 1,
+            Type = "Role"
+        };
 
+        await context.Roles.AddAsync(role);
         await context.Users.AddAsync(user);
         await context.SaveChangesAsync();
         
@@ -210,6 +216,7 @@ public class UserRepositoryTests
         Assert.Equal(user.Email, result.Email);
         Assert.Equal(user.HashPassword, result.HashPassword);
         Assert.Equal(user.RoleId, result.RoleId);
+        Assert.NotNull(user.Role);
     }
 
     [Fact]

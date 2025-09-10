@@ -12,6 +12,7 @@ namespace LLCStroyCom.Application.Services;
 public class AuthService : IAuthService
 {
     private readonly ITokenService _tokenService;
+    private readonly IRefreshTokenService _refreshTokenService;
     private readonly IUserRepository _userRepository;
     private readonly IRoleRepository _roleRepository;
     private readonly IPasswordHasher _passwordHasher;
@@ -20,6 +21,7 @@ public class AuthService : IAuthService
 
     public AuthService(
         ITokenService tokenService,
+        IRefreshTokenService refreshTokenService,
         IUserRepository userRepository,
         IRoleRepository roleRepository,
         IPasswordHasher passwordHasher,
@@ -27,6 +29,7 @@ public class AuthService : IAuthService
         ILogger<AuthService> logger)
     {
         _tokenService = tokenService;
+        _refreshTokenService = refreshTokenService;
         _userRepository = userRepository;
         _roleRepository = roleRepository;
         _passwordHasher = passwordHasher;
@@ -75,7 +78,8 @@ public class AuthService : IAuthService
         }
     }
 
-    public async Task<Result<JwtTokenDto>> LoginAsync(string email, string password, CancellationToken cancellationToken = default)
+    public async Task<Result<PlainJwtTokensDto>>
+        LoginAsync(string email, string password, CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Started to login user");
         
@@ -84,7 +88,7 @@ public class AuthService : IAuthService
         if (!validationResult.Succeeded)
         {
             _logger.LogWarning($"Invalid email or password: {validationResult.Errors}");
-            return Result<JwtTokenDto>.Failure();
+            return Result<PlainJwtTokensDto>.Failure();
         }
 
         try
@@ -94,26 +98,45 @@ public class AuthService : IAuthService
             if (!_passwordHasher.VerifyPassword(password, user.HashPassword))
             {
                 _logger.LogWarning("Invalid email or password");
-                return Result<JwtTokenDto>.Failure(
+                return Result<PlainJwtTokensDto>.Failure(
                     new Error("Invalid email or password", "InvalidCredentials"));
             }
 
             var tokens = await _tokenService.CreateTokensAsync(user);
 
-            await _userRepository.AssignRefreshTokenAsync(user.Id, tokens.RefreshToken, cancellationToken);
+            await _userRepository.AssignRefreshTokenAsync(
+                user.Id, tokens.RefreshTokenDto.RefreshTokenEntity, cancellationToken);
 
-            return Result<JwtTokenDto>.Success(tokens);
+            return Result<PlainJwtTokensDto>.Success(
+                new PlainJwtTokensDto(tokens.AccessToken, tokens.RefreshTokenDto.PlainRefreshToken));
         }
         catch (UserCouldNotBeFound e)
         {
             _logger.LogError(e, "User with email \"{email}\" could not be found ", email);
-            return Result<JwtTokenDto>.Failure(new Error(e.Message, "AuthError"));
+            return Result<PlainJwtTokensDto>.Failure(new Error(e.Message, "AuthError"));
         }
     }
 
-    public Task<Result<JwtTokenDto>> RefreshTokenAsync(JwtTokenDto tokens)
+    // TODO Write tests
+    public async Task<Result<PlainJwtTokensDto>> 
+        RefreshTokenAsync(PlainJwtTokensDto tokens, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        _logger.LogInformation("Started to refresh user's tokens");
+
+        try
+        {
+            var refreshedTokens = await _refreshTokenService.RefreshAsync(tokens.RefreshToken,
+                cancellationToken);
+            
+            return Result<PlainJwtTokensDto>.Success(
+                new PlainJwtTokensDto(refreshedTokens.AccessToken,
+                    refreshedTokens.RefreshTokenDto.PlainRefreshToken));
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
     }
 
     private async Task<Result> ValidateAuthenticationDataAsync(string email, string password)

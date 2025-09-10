@@ -1,4 +1,6 @@
-﻿namespace LLCStroyCom.Domain.Entities;
+﻿using System.Text.Json;
+
+namespace LLCStroyCom.Domain.Entities;
 
 public class RefreshToken
 {
@@ -10,4 +12,16 @@ public class RefreshToken
     public DateTimeOffset? RevokedAt { get; set; }
     public bool IsActive => RevokedAt == null && DateTimeOffset.UtcNow < ExpiresAt;
     public virtual ApplicationUser User { get; set; } = null!;
+
+    public string ToCookieValue()
+    {
+        return JsonSerializer.Serialize(new
+        {
+            Id,
+            UserId,
+            TokenHash,
+            ExpiresAt,
+            RevokedAt
+        });
+    }
 }

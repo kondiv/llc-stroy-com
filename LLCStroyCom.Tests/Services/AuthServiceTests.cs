@@ -15,6 +15,7 @@ public class AuthServiceTests
     private readonly Mock<IRoleRepository> _roleRepositoryMock;
     private readonly Mock<IPasswordHasher> _passwordHasherMock;
     private readonly Mock<ITokenService> _tokenServiceMock;
+    private readonly Mock<IRefreshTokenService> _refreshTokenServiceMock;
 
     private readonly IAuthService _authService;
 
@@ -24,11 +25,13 @@ public class AuthServiceTests
         _roleRepositoryMock = new Mock<IRoleRepository>();
         _passwordHasherMock = new Mock<IPasswordHasher>();
         _tokenServiceMock = new Mock<ITokenService>();
+        _refreshTokenServiceMock = new Mock<IRefreshTokenService>();
         var authenticationDataValidator = new AuthenticationDataValidator();
         var loggerMock = new Mock<ILogger<AuthService>>();
 
         _authService = new AuthService(
             _tokenServiceMock.Object,
+            _refreshTokenServiceMock.Object,
             _userRepositoryMock.Object,
             _roleRepositoryMock.Object,
             _passwordHasherMock.Object,

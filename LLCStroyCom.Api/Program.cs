@@ -1,5 +1,9 @@
 using System.Text;
+using LLCStroyCom.Application.Services;
+using LLCStroyCom.Application.Validators.Auth;
+using LLCStroyCom.Domain.Configs;
 using LLCStroyCom.Domain.Repositories;
+using LLCStroyCom.Domain.Services;
 using LLCStroyCom.Infrastructure;
 using LLCStroyCom.Infrastructure.Repositories;
 using LLCStroyCom.Infrastructure.Seeders;
@@ -8,6 +12,12 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
+
+DotNetEnv.Env.Load("../.env");
+
+builder.Configuration
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+    .AddEnvironmentVariables();
 
 builder.Services.AddDbContext<StroyComDbContext>(options => 
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -21,8 +31,30 @@ builder.Services.AddScoped<RoleSeeder>();
 #region Repositories
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IRoleRepository, RoleRepository>();
+builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 
 #endregion
+
+#region Services
+
+var hmacSecret = builder.Configuration.GetValue<string>("HmacSecret")!;
+
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<ITokenService, JwtTokenService>();
+builder.Services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
+builder.Services.AddSingleton<ITokenHasher>(new HmacTokenHasher(hmacSecret));
+builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
+
+#endregion
+
+#region Validators
+
+builder.Services.AddScoped<AuthenticationDataValidator>();
+
+#endregion
+
+builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
 
 builder.Services.AddAuthentication(options =>
     {
@@ -40,6 +72,20 @@ builder.Services.AddAuthentication(options =>
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidAudience = builder.Configuration["Jwt:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+        };
+
+        options.Events = new JwtBearerEvents()
+        {
+            OnMessageReceived = context =>
+            {
+                context.Request.Cookies.TryGetValue("access_token", out var accessToken);
+                if (!string.IsNullOrEmpty(accessToken))
+                {
+                    context.Token = accessToken;
+                }
+                
+                return Task.CompletedTask;
+            }
         };
     });
 

@@ -5,6 +5,7 @@ using LLCStroyCom.Application.Services;
 using LLCStroyCom.Domain.Configs;
 using LLCStroyCom.Domain.Dto;
 using LLCStroyCom.Domain.Entities;
+using LLCStroyCom.Domain.Services;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Moq;
@@ -15,6 +16,7 @@ public class JwtTokenServiceTests
 {
     private readonly JwtTokenService _jwtTokenService;
     private readonly JwtSettings _jwtSettings;
+    private readonly ITokenHasher _tokenHasher;
 
     public JwtTokenServiceTests()
     {
@@ -30,7 +32,8 @@ public class JwtTokenServiceTests
         var jwtSettingsMock = new Mock<IOptions<JwtSettings>>();
         jwtSettingsMock.Setup(x => x.Value).Returns(_jwtSettings);
 
-        _jwtTokenService = new JwtTokenService(jwtSettingsMock.Object);
+        _tokenHasher = new HmacTokenHasher("very_secret_secret");
+        _jwtTokenService = new JwtTokenService(jwtSettingsMock.Object, _tokenHasher);
     }
 
     private ApplicationUser CreateTestUser(string email = "test@example.com", string role = "User")
@@ -56,8 +59,8 @@ public class JwtTokenServiceTests
         Assert.NotNull(result);
         Assert.IsType<JwtTokenDto>(result);
         Assert.NotNull(result.AccessToken);
-        Assert.NotNull(result.RefreshToken);
-        Assert.NotNull(result.RefreshToken.TokenHash);
+        Assert.NotNull(result.RefreshTokenDto);
+        Assert.NotNull(result.RefreshTokenDto.RefreshTokenEntity.TokenHash);
     }
 
     [Fact]
@@ -142,8 +145,8 @@ public class JwtTokenServiceTests
         var result = await _jwtTokenService.CreateTokensAsync(user);
 
         // Assert
-        Assert.True(result.RefreshToken.ExpiresAt <= expectedExpiration.AddMinutes(1));
-        Assert.True(result.RefreshToken.ExpiresAt >= expectedExpiration.AddMinutes(-1));
+        Assert.True(result.RefreshTokenDto.RefreshTokenEntity.ExpiresAt <= expectedExpiration.AddMinutes(1));
+        Assert.True(result.RefreshTokenDto.RefreshTokenEntity.ExpiresAt >= expectedExpiration.AddMinutes(-1));
     }
 
     [Fact]
@@ -156,9 +159,9 @@ public class JwtTokenServiceTests
         var result = await _jwtTokenService.CreateTokensAsync(user);
 
         // Assert
-        Assert.NotNull(result.RefreshToken.TokenHash);
-        Assert.NotEmpty(result.RefreshToken.TokenHash);
-        Assert.True(result.RefreshToken.TokenHash.Length >= 32); // Base64 of 32 bytes
+        Assert.NotNull(result.RefreshTokenDto.RefreshTokenEntity.TokenHash);
+        Assert.NotEmpty(result.RefreshTokenDto.RefreshTokenEntity.TokenHash);
+        Assert.True(result.RefreshTokenDto.RefreshTokenEntity.TokenHash.Length >= 32); // Base64 of 32 bytes
     }
 
     [Fact]
@@ -187,7 +190,8 @@ public class JwtTokenServiceTests
         var result2 = await _jwtTokenService.CreateTokensAsync(user);
 
         // Assert - Refresh tokens should be different each time
-        Assert.NotEqual(result1.RefreshToken.TokenHash, result2.RefreshToken.TokenHash);
+        Assert.NotEqual(result1.RefreshTokenDto.RefreshTokenEntity.TokenHash,
+            result2.RefreshTokenDto.RefreshTokenEntity.TokenHash);
     }
 
     [Fact]

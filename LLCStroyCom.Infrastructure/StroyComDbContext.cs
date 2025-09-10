@@ -13,6 +13,7 @@ public class StroyComDbContext : DbContext
     
     public DbSet<ApplicationUser> Users { get; set; }
     public DbSet<ApplicationRole> Roles { get; set; }
+    public DbSet<RefreshToken> RefreshTokens { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

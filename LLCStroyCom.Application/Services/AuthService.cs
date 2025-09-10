@@ -119,7 +119,7 @@ public class AuthService : IAuthService
 
     // TODO Write tests
     public async Task<Result<PlainJwtTokensDto>> 
-        RefreshTokenAsync(PlainJwtTokensDto tokens, CancellationToken cancellationToken = default)
+        RefreshTokensAsync(PlainJwtTokensDto tokens, CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Started to refresh user's tokens");
 
@@ -135,7 +135,7 @@ public class AuthService : IAuthService
         catch (Exception e)
         {
             Console.WriteLine(e);
-            throw;
+            return Result<PlainJwtTokensDto>.Failure();
         }
     }
 

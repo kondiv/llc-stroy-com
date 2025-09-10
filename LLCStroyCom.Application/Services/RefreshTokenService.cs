@@ -30,6 +30,8 @@ public class RefreshTokenService : IRefreshTokenService
     public async Task<JwtTokenDto> 
         RefreshAsync(string plainRefreshToken, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(plainRefreshToken);
+        
         var refreshToken = await _refreshTokenRepository.GetAsync(plainRefreshToken, cancellationToken);
 
         if (refreshToken is null || !refreshToken.IsActive)
@@ -54,6 +56,8 @@ public class RefreshTokenService : IRefreshTokenService
 
     public async Task RevokeAsync(RefreshToken token, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(token);
+        
         token.RevokedAt = DateTimeOffset.UtcNow;
 
         await _refreshTokenRepository.UpdateAsync(token, cancellationToken);

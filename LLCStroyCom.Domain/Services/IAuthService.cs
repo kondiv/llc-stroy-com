@@ -8,5 +8,5 @@ public interface IAuthService
 {
     Task<Result> RegisterAsync(string email, string password, string roleName, CancellationToken cancellationToken = default);
     Task<Result<PlainJwtTokensDto>> LoginAsync(string email, string password, CancellationToken cancellationToken = default);
-    Task<Result<PlainJwtTokensDto>> RefreshTokenAsync(PlainJwtTokensDto tokens, CancellationToken cancellationToken = default);
+    Task<Result<PlainJwtTokensDto>> RefreshTokensAsync(PlainJwtTokensDto tokens, CancellationToken cancellationToken = default);
 }

@@ -50,7 +50,7 @@ builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
 
 #region Validators
 
-builder.Services.AddScoped<AuthenticationDataValidator>();
+builder.Services.AddSingleton<AuthenticationDataValidator>();
 
 #endregion
 

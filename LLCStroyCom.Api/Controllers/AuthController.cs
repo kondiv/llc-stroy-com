@@ -115,7 +115,7 @@ public class AuthController : ControllerBase
 
         var plainJwtTokensDto = new PlainJwtTokensDto(accessToken ?? string.Empty, refreshToken ?? string.Empty);
 
-        var tokens = await _authService.RefreshTokenAsync(plainJwtTokensDto);
+        var tokens = await _authService.RefreshTokensAsync(plainJwtTokensDto);
 
         if (tokens.Value is null)
         {

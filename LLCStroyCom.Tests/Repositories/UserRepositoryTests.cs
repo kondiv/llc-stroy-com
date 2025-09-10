@@ -378,4 +378,29 @@ public class UserRepositoryTests
         // Assert
         await Assert.ThrowsAsync<UserCouldNotBeFound>(act);
     }
+
+    [Fact]
+    public async Task GetAsync_WhenUserExists_ShouldReturnUser()
+    {
+        // Arrange
+        var context = GetInMemoryDbContext();
+        IUserRepository userRepository = new UserRepository(context);
+        
+        var userId = Guid.NewGuid();
+        var user = new ApplicationUser()
+        {
+            Id = userId,
+            Email = "email@email.com",
+            HashPassword = "asdfasdfasdf"
+        };
+        await context.Users.AddAsync(user);
+        await context.SaveChangesAsync();
+        
+        // Act
+        var result = await userRepository.GetAsync(userId);
+        
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(userId, result.Id);
+    }
 }

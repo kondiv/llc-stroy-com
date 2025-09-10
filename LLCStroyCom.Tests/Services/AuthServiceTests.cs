@@ -1,5 +1,6 @@
 ﻿using LLCStroyCom.Application.Services;
 using LLCStroyCom.Application.Validators.Auth;
+using LLCStroyCom.Domain.Dto;
 using LLCStroyCom.Domain.Entities;
 using LLCStroyCom.Domain.Exceptions;
 using LLCStroyCom.Domain.Repositories;

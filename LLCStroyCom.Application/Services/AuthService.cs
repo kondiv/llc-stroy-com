@@ -104,7 +104,7 @@ public class AuthService : IAuthService
 
             var tokens = await _tokenService.CreateTokensAsync(user);
 
-            await _userRepository.AssignRefreshTokenAsync(
+            await _userRepository.AssignNewAndRevokeOldRefreshTokenAsync(
                 user.Id, tokens.RefreshTokenDto.RefreshTokenEntity, cancellationToken);
 
             return Result<PlainJwtTokensDto>.Success(
@@ -127,14 +127,18 @@ public class AuthService : IAuthService
         {
             var refreshedTokens = await _refreshTokenService.RefreshAsync(tokens.RefreshToken,
                 cancellationToken);
-            
+
             return Result<PlainJwtTokensDto>.Success(
                 new PlainJwtTokensDto(refreshedTokens.AccessToken,
                     refreshedTokens.RefreshTokenDto.PlainRefreshToken));
         }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            _logger.LogError(e, e.Message);
             return Result<PlainJwtTokensDto>.Failure();
         }
     }

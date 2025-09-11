@@ -160,7 +160,12 @@ public class UserRepositoryTests
             HashPassword = "asdfadsfasdf",
             RoleId = 1
         };
-
+        var role = new ApplicationRole()
+        {
+            Id = 1,
+            Type = "Role"
+        };
+        await context.Roles.AddAsync(role);
         await context.Users.AddAsync(applicationUser);
         await context.SaveChangesAsync();
         
@@ -306,7 +311,7 @@ public class UserRepositoryTests
         var userId = Guid.NewGuid();
         
         // Act
-        var act = () => userRepository.AssignRefreshTokenAsync(userId, refreshToken);
+        var act = () => userRepository.AssignNewAndRevokeOldRefreshTokenAsync(userId, refreshToken);
         
         // Assert
         await Assert.ThrowsAsync<ArgumentNullException>(act);
@@ -323,7 +328,7 @@ public class UserRepositoryTests
         var cancellationToken = new CancellationToken(canceled: true);
 
         // Act
-        var act = () => userRepository.AssignRefreshTokenAsync(userId, refreshToken, cancellationToken);
+        var act = () => userRepository.AssignNewAndRevokeOldRefreshTokenAsync(userId, refreshToken, cancellationToken);
         
         // Assert
         await Assert.ThrowsAsync<OperationCanceledException>(act);
@@ -342,9 +347,15 @@ public class UserRepositoryTests
             Id = userId,
             Email = "email@email.ru",
             HashPassword = "asdfasdfasdf",
-            RoleId = 1
+            RoleId = 1,
+        };
+        var role = new ApplicationRole()
+        {
+            Id = 1,
+            Type = "Role"
         };
 
+        await context.Roles.AddAsync(role);
         await context.Users.AddAsync(user);
         await context.SaveChangesAsync();
         
@@ -356,11 +367,67 @@ public class UserRepositoryTests
         };
         
         // Act
-        await userRepository.AssignRefreshTokenAsync(userId, refreshToken);
+        await userRepository.AssignNewAndRevokeOldRefreshTokenAsync(userId, refreshToken);
         
         // Assert
         Assert.Single(user.RefreshTokens);
         Assert.Equal(user.Id, user.RefreshTokens.First().UserId);
+    }
+
+    [Fact]
+    public async Task
+        AssignRefreshTokenAsync_WhenEverythingIsOkAndUserHasRefreshTokens_ShouldAddRefreshTokenToDbAndRevokeOldToken()
+    {
+        // Arrange
+        var context = GetInMemoryDbContext();
+        IUserRepository userRepository = new UserRepository(context);
+
+        var userId = Guid.NewGuid();
+        var user = new ApplicationUser()
+        {
+            Id = userId,
+            Email = "email@email.ru",
+            HashPassword = "asdfasdfasdf",
+            RoleId = 1,
+            RefreshTokens = new List<RefreshToken>()
+            {
+                new RefreshToken()
+                {
+                    CreatedAt = DateTimeOffset.UtcNow.AddMinutes(-5),
+                    TokenHash = "refreshToken",
+                    ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(5),
+                    RevokedAt = null
+                }
+            }
+        };
+        var role = new ApplicationRole()
+        {
+            Id = 1,
+            Type = "Role"
+        };
+
+        await context.Roles.AddAsync(role);
+        await context.Users.AddAsync(user);
+        await context.SaveChangesAsync();
+        
+        var expiresAt = DateTime.UtcNow.AddDays(7);
+        var refreshToken = new RefreshToken()
+        {
+            TokenHash = "refreshToken",
+            ExpiresAt = expiresAt,
+        };
+        
+        // Act
+        await userRepository.AssignNewAndRevokeOldRefreshTokenAsync(userId, refreshToken);
+        
+        // Assert
+        Assert.Equal(2, user.RefreshTokens.Count);
+
+        var oldToken = user.RefreshTokens.First();
+        var addedToken = user.RefreshTokens.Last();
+
+        Assert.NotNull(oldToken.RevokedAt);
+        Assert.Null(addedToken.RevokedAt);
     }
 
     [Fact]
@@ -373,7 +440,7 @@ public class UserRepositoryTests
         var refreshToken = new RefreshToken();
         
         // Act
-        var act = () => userRepository.AssignRefreshTokenAsync(userId, refreshToken);
+        var act = () => userRepository.AssignNewAndRevokeOldRefreshTokenAsync(userId, refreshToken);
         
         // Assert
         await Assert.ThrowsAsync<UserCouldNotBeFound>(act);
@@ -391,8 +458,17 @@ public class UserRepositoryTests
         {
             Id = userId,
             Email = "email@email.com",
-            HashPassword = "asdfasdfasdf"
+            HashPassword = "asdfasdfasdf",
+            RoleId = 1,
+            RefreshTokens = new List<RefreshToken>()
         };
+        var role = new ApplicationRole()
+        {
+            Id = 1,
+            Type = "SomeRole"
+        };
+
+        await context.Roles.AddAsync(role);
         await context.Users.AddAsync(user);
         await context.SaveChangesAsync();
         
@@ -402,5 +478,22 @@ public class UserRepositoryTests
         // Assert
         Assert.NotNull(result);
         Assert.Equal(userId, result.Id);
+    }
+
+    [Fact]
+    public async Task GetAsync_WhenOperationIsCanceled_ShouldThrowOperationCanceledException()
+    {
+        // Arrange
+        var context = GetInMemoryDbContext();
+        IUserRepository userRepository = new UserRepository(context);
+        
+        var cancellationToken = new CancellationToken(canceled: true);
+        var userId = Guid.NewGuid();
+        
+        // Act
+        var act = () => userRepository.GetAsync(userId, cancellationToken);
+        
+        // Assert
+        await Assert.ThrowsAsync<OperationCanceledException>(act);
     }
 }

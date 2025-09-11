@@ -179,7 +179,9 @@ public class RefreshTokenServiceTests
         
         // Assert
         Assert.NotNull(tokens);
-        Assert.NotNull(refreshToken.RevokedAt);
+        _userRepositoryMock
+            .Verify(r => r.AssignNewAndRevokeOldRefreshTokenAsync(It.IsAny<Guid>(), It.IsAny<RefreshToken>(),
+                It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]

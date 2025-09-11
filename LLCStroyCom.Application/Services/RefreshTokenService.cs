@@ -7,7 +7,6 @@ using Microsoft.Extensions.Logging;
 
 namespace LLCStroyCom.Application.Services;
 
-// TODO Write tests
 public class RefreshTokenService : IRefreshTokenService
 {
     private readonly IRefreshTokenRepository _refreshTokenRepository;
@@ -45,10 +44,9 @@ public class RefreshTokenService : IRefreshTokenService
 
         var tokens = await _tokenService.CreateTokensAsync(user);
 
-        await _userRepository.AssignRefreshTokenAsync(user.Id, tokens.RefreshTokenDto.RefreshTokenEntity,
+        await _userRepository.AssignNewAndRevokeOldRefreshTokenAsync(user.Id, tokens.RefreshTokenDto.RefreshTokenEntity,
             cancellationToken);
-
-        await RevokeAsync(refreshToken, cancellationToken);
+        
         _logger.LogInformation($"Refresh token {refreshToken.Id} is revoked. New tokens are generated");
 
         return tokens;

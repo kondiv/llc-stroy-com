@@ -1,6 +1,7 @@
 using LLCStroyCom.Domain.Entities;
 using LLCStroyCom.Domain.Exceptions;
 using LLCStroyCom.Domain.Repositories;
+using LLCStroyCom.Domain.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace LLCStroyCom.Infrastructure.Repositories;
@@ -55,11 +56,20 @@ public class UserRepository : IUserRepository
                ?? throw UserCouldNotBeFound.WithEmail(email);
     }
 
-    public async Task AssignRefreshTokenAsync(Guid userId, RefreshToken refreshToken, CancellationToken cancellationToken = default)
+    public async Task AssignNewAndRevokeOldRefreshTokenAsync(Guid userId, RefreshToken refreshToken, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(refreshToken);
 
         var user = await GetAsync(userId, cancellationToken);
+
+        var lastActiveToken = user.RefreshTokens
+            .OrderByDescending(rt => rt.CreatedAt)
+            .FirstOrDefault(rt => rt.IsActive);
+
+        if (lastActiveToken != null)
+        {
+            lastActiveToken.RevokedAt = DateTimeOffset.UtcNow;
+        }
         
         user.RefreshTokens.Add(refreshToken);
         

@@ -5,6 +5,6 @@ namespace LLCStroyCom.Domain.Services;
 
 public interface IRefreshTokenService
 {
-    Task<JwtTokenDto> RefreshAsync(string plainRefreshToken, CancellationToken cancellationToken = default);
+    Task<PlainJwtTokensDto> RefreshAsync(string plainRefreshToken, CancellationToken cancellationToken = default);
     Task RevokeAsync(RefreshToken token, CancellationToken cancellationToken = default);
 }

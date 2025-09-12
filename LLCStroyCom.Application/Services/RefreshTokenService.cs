@@ -26,7 +26,7 @@ public class RefreshTokenService : IRefreshTokenService
         _logger = logger;
     }
 
-    public async Task<JwtTokenDto> 
+    public async Task<PlainJwtTokensDto> 
         RefreshAsync(string plainRefreshToken, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(plainRefreshToken);
@@ -49,7 +49,7 @@ public class RefreshTokenService : IRefreshTokenService
         
         _logger.LogInformation($"Refresh token {refreshToken.Id} is revoked. New tokens are generated");
 
-        return tokens;
+        return new PlainJwtTokensDto(tokens.AccessToken, tokens.RefreshTokenDto.PlainRefreshToken);
     }
 
     public async Task RevokeAsync(RefreshToken token, CancellationToken cancellationToken = default)

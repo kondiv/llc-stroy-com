@@ -2,6 +2,7 @@
 using LLCStroyCom.Domain.Configs;
 using LLCStroyCom.Domain.Constants;
 using LLCStroyCom.Domain.Dto;
+using LLCStroyCom.Domain.Exceptions;
 using LLCStroyCom.Domain.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -13,11 +14,16 @@ namespace LLCStroyCom.Api.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
+    private readonly IRefreshTokenService _refreshTokenService;
     private readonly JwtSettings _jwtSettings;
 
-    public AuthController(IAuthService authService, IOptions<JwtSettings> jwtSettings)
+    public AuthController(
+        IAuthService authService,
+        IRefreshTokenService refreshTokenService,
+        IOptions<JwtSettings> jwtSettings)
     {
         _authService = authService;
+        _refreshTokenService = refreshTokenService;
         _jwtSettings = jwtSettings.Value;
     }
 
@@ -110,20 +116,23 @@ public class AuthController : ControllerBase
     [HttpPost("refresh")]
     public async Task<ActionResult> RefreshAsync()
     {
-        HttpContext.Request.Cookies.TryGetValue("access_token", out var accessToken);
         HttpContext.Request.Cookies.TryGetValue("refresh_token", out var refreshToken);
 
-        var plainJwtTokensDto = new PlainJwtTokensDto(accessToken ?? string.Empty, refreshToken ?? string.Empty);
-
-        var tokens = await _authService.RefreshTokensAsync(plainJwtTokensDto);
-
-        if (tokens.Value is null)
+        if (refreshToken is null)
         {
-            return BadRequest();
+            return Unauthorized();
         }
         
-        SetTokensInsideCookie(HttpContext, tokens.Value);
-
+        try
+        {
+            var tokens = await _refreshTokenService.RefreshAsync(refreshToken);
+            SetTokensInsideCookie(HttpContext, tokens);
+        }
+        catch (UnauthorizedException)
+        {
+            return Unauthorized();
+        }
+        
         return Ok();
     }
 

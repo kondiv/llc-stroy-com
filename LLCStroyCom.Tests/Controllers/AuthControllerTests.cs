@@ -2,6 +2,7 @@
 using LLCStroyCom.Api.Requests;
 using LLCStroyCom.Domain.Configs;
 using LLCStroyCom.Domain.Dto;
+using LLCStroyCom.Domain.Exceptions;
 using LLCStroyCom.Domain.Response;
 using LLCStroyCom.Domain.Services;
 using Microsoft.AspNetCore.Http;
@@ -14,8 +15,10 @@ namespace LLCStroyCom.Tests.Controllers;
 public class AuthControllerTests
 {
     private readonly Mock<IAuthService> _authServiceMock;
+    private readonly Mock<IRefreshTokenService> _refreshTokenServiceMock;
     private readonly JwtSettings _jwtSettings;
     private readonly AuthController _authController;
+    private readonly DefaultHttpContext _httpContext;
     
     public AuthControllerTests()
     {
@@ -31,11 +34,14 @@ public class AuthControllerTests
         jwtSettingsMock.Setup(o => o.Value).Returns(_jwtSettings);
         
         _authServiceMock = new Mock<IAuthService>();
-        _authController = new AuthController(_authServiceMock.Object, jwtSettingsMock.Object)
+        _refreshTokenServiceMock = new Mock<IRefreshTokenService>();
+        _httpContext = new DefaultHttpContext();
+        
+        _authController = new AuthController(_authServiceMock.Object, _refreshTokenServiceMock.Object, jwtSettingsMock.Object)
         {
             ControllerContext = new ControllerContext()
             {
-                HttpContext = new DefaultHttpContext()
+                HttpContext = _httpContext
             }
         };
     }
@@ -283,22 +289,108 @@ public class AuthControllerTests
         Assert.IsType<OkResult>(result);
     }
 
-    [Fact]
-    public async Task RefreshAsync_WhenNoCookies_ShouldReturnBadRequest()
-    {
-        // Arrange
-        // Куки не добавляем
+ [Fact]
+        public async Task RefreshAsync_WithValidRefreshToken_ReturnsOk()
+        {
+            // Arrange
+            var refreshToken = "valid-refresh-token";
+            var tokens = new PlainJwtTokensDto("new-access-token", "new-refresh-token");
+            
+            _httpContext.Request.Cookies = new RequestCookieCollection(new Dictionary<string, string>
+            {
+                { "refresh_token", refreshToken }
+            });
 
-        var failedResult = Result<PlainJwtTokensDto>.Failure();
+            _refreshTokenServiceMock
+                .Setup(service => service.RefreshAsync(refreshToken, CancellationToken.None))
+                .ReturnsAsync(tokens);
 
-        _authServiceMock
-            .Setup(s => s.RefreshTokensAsync(It.IsAny<PlainJwtTokensDto>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(failedResult);
+            // Act
+            var result = await _authController.RefreshAsync();
 
-        // Act
-        var result = await _authController.RefreshAsync();
+            // Assert
+            Assert.IsType<OkResult>(result);
+            _refreshTokenServiceMock.Verify(service => 
+                service.RefreshAsync(refreshToken, It.IsAny<CancellationToken>()), Times.Once);
+            
+            // Verify cookies were set
+            Assert.Contains(_httpContext.Response.Headers, 
+                h => h.Key == "Set-Cookie" && 
+                     h.Value.ToString().Contains("access_token=new-access-token"));
+            Assert.Contains(_httpContext.Response.Headers,
+                h => h.Key == "Set-Cookie" &&
+                     h.Value.ToString().Contains("refresh_token=new-refresh-token"));
+        }
 
-        // Assert
-        Assert.IsType<BadRequestResult>(result);
-    }
+        [Fact]
+        public async Task RefreshAsync_WithEmptyRefreshToken_ReturnsUnauthorized()
+        {
+            // Arrange
+            _httpContext.Request.Cookies = new RequestCookieCollection(new Dictionary<string, string>());
+
+            // Act
+            var result = await _authController.RefreshAsync();
+
+            // Assert
+            Assert.IsType<UnauthorizedResult>(result);
+            _refreshTokenServiceMock.Verify(service => 
+                service.RefreshAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task RefreshAsync_WhenServiceThrowsUnauthorizedException_ReturnsUnauthorized()
+        {
+            // Arrange
+            var refreshToken = "invalid-refresh-token";
+            
+            _httpContext.Request.Cookies = new RequestCookieCollection(new Dictionary<string, string>
+            {
+                { "refresh_token", refreshToken }
+            });
+
+            _refreshTokenServiceMock
+                .Setup(service => service.RefreshAsync(refreshToken, It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new UnauthorizedException("Invalid token"));
+
+            // Act
+            var result = await _authController.RefreshAsync();
+
+            // Assert
+            Assert.IsType<UnauthorizedResult>(result);
+        }
+
+        [Fact]
+        public async Task RefreshAsync_WhenServiceThrowsOtherException_Throws()
+        {
+            // Arrange
+            var refreshToken = "valid-token";
+            
+            _httpContext.Request.Cookies = new RequestCookieCollection(new Dictionary<string, string>
+            {
+                { "refresh_token", refreshToken }
+            });
+
+            _refreshTokenServiceMock
+                .Setup(service => service.RefreshAsync(refreshToken, It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new Exception("Server error"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _authController.RefreshAsync());
+        }
+
+        [Fact]
+        public async Task RefreshAsync_WithNullRefreshToken_ReturnsUnauthorized()
+        {
+            // Arrange
+            _httpContext.Request.Cookies = new RequestCookieCollection(new Dictionary<string, string>());
+
+            // Act
+            var result = await _authController.RefreshAsync();
+
+            // Assert
+            Assert.IsType<UnauthorizedResult>(result);
+            _refreshTokenServiceMock.Verify(service => 
+                service.RefreshAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+        
 }

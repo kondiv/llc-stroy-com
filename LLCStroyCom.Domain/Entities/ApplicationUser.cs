@@ -1,0 +1,11 @@
+﻿namespace LLCStroyCom.Domain.Entities;
+
+public class ApplicationUser
+{
+    public Guid Id { get; set; }
+    public string Email { get; set; }
+    public string HashPassword { get; set; }
+    public int RoleId { get; set; } = 0;
+    public virtual ApplicationRole Role { get; set; } = null!;
+    public ICollection<RefreshToken> RefreshTokens { get; set; } = [];
+}

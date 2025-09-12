@@ -112,5 +112,76 @@ public class StroyComDbContext : DbContext
                 .HasForeignKey(rt => rt.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
+
+        modelBuilder.Entity<Project>(entity =>
+        {
+            entity.ToTable("project");
+            
+            entity.HasKey(e => e.Id);
+            
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("uuid_generate_v4()")
+                .ValueGeneratedOnAdd()
+                .HasColumnName("id");
+            
+            entity.Property(e => e.Name)
+                .IsRequired()
+                .HasMaxLength(255)
+                .HasColumnName("name");
+            
+            entity.Property(e => e.City)
+                .IsRequired()
+                .HasMaxLength(100)
+                .HasColumnName("city");
+            
+            entity.Property(e => e.CompanyId)
+                .IsRequired()
+                .HasColumnName("company_id");
+            
+            entity.Property(e => e.StatusId)
+                .IsRequired()
+                .HasColumnName("status_id");
+            
+            entity.HasOne(p => p.Company)
+                .WithMany(c => c.Projects)
+                .HasForeignKey(p => p.CompanyId);
+            
+            entity.HasOne(p => p.Status)
+                .WithMany(s => s.Projects)
+                .HasForeignKey(p => p.StatusId);
+        });
+
+        modelBuilder.Entity<Company>(entity =>
+        {
+            entity.ToTable("company");
+            
+            entity.HasKey(e => e.Id);
+            
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("uuid_generate_v4()")
+                .ValueGeneratedOnAdd()
+                .HasColumnName("id");
+            
+            entity.Property(e => e.Name)
+                .IsRequired()
+                .HasMaxLength(127)
+                .HasColumnName("name");
+        });
+
+        modelBuilder.Entity<Status>(entity =>
+        {
+            entity.ToTable("status");
+            
+            entity.HasKey(e => e.Id);
+            
+            entity.Property(e => e.Id)
+                .ValueGeneratedOnAdd()
+                .HasColumnName("id");
+
+            entity.Property(e => e.Name)
+                .IsRequired()
+                .HasMaxLength(31)
+                .HasColumnName("name");
+        });
     }
 }

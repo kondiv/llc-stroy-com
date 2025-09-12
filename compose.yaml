@@ -1,10 +1,4 @@
 ﻿services:
-  llcstroycom.api:
-    image: llcstroycom.api
-    build:
-      context: .
-      dockerfile: LLCStroyCom.Api/Dockerfile
-  
   database:
     image: postgres:latest
     restart: unless-stopped

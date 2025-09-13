@@ -12,12 +12,15 @@ public class ProjectRepository : IProjectRepository
         _context = context;
     }
     
-    public Task CreateAsync(Project project, CancellationToken cancellationToken = default)
+    public async Task CreateAsync(Project project, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ArgumentNullException.ThrowIfNull(project);
+        
+        await _context.Projects.AddAsync(project, cancellationToken); 
+        await _context.SaveChangesAsync(cancellationToken);
     }
 
-    public Task GetAsync(Guid id, CancellationToken cancellationToken = default)
+    public Task<Project> GetAsync(Guid id, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

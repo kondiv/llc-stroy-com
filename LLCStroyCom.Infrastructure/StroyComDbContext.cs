@@ -14,6 +14,8 @@ public class StroyComDbContext : DbContext
     public DbSet<ApplicationUser> Users { get; set; }
     public DbSet<ApplicationRole> Roles { get; set; }
     public DbSet<RefreshToken> RefreshTokens { get; set; }
+    public DbSet<Project> Projects { get; set; }
+    public DbSet<Company> Companies { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -134,21 +136,22 @@ public class StroyComDbContext : DbContext
                 .HasMaxLength(100)
                 .HasColumnName("city");
             
+            entity.Property(e => e.CreatedAt)
+                .IsRequired()
+                .HasDefaultValueSql("now()")
+                .HasColumnName("created_at");
+            
+            entity.Property(e => e.Status)
+                .IsRequired()
+                .HasColumnName("status");
+            
             entity.Property(e => e.CompanyId)
                 .IsRequired()
                 .HasColumnName("company_id");
             
-            entity.Property(e => e.StatusId)
-                .IsRequired()
-                .HasColumnName("status_id");
-            
             entity.HasOne(p => p.Company)
                 .WithMany(c => c.Projects)
                 .HasForeignKey(p => p.CompanyId);
-            
-            entity.HasOne(p => p.Status)
-                .WithMany(s => s.Projects)
-                .HasForeignKey(p => p.StatusId);
         });
 
         modelBuilder.Entity<Company>(entity =>
@@ -165,22 +168,6 @@ public class StroyComDbContext : DbContext
             entity.Property(e => e.Name)
                 .IsRequired()
                 .HasMaxLength(127)
-                .HasColumnName("name");
-        });
-
-        modelBuilder.Entity<Status>(entity =>
-        {
-            entity.ToTable("status");
-            
-            entity.HasKey(e => e.Id);
-            
-            entity.Property(e => e.Id)
-                .ValueGeneratedOnAdd()
-                .HasColumnName("id");
-
-            entity.Property(e => e.Name)
-                .IsRequired()
-                .HasMaxLength(31)
                 .HasColumnName("name");
         });
     }

@@ -6,10 +6,8 @@ public class Project
     
     public string Name { get; set; } = null!;
     public string City { get; set; } = null!;
-    
+    public DateTimeOffset CreatedAt { get; set; }
+    public virtual Status Status { get; set; }
     public Guid CompanyId { get; set; }
-    public int StatusId { get; set; }
-
-    public virtual Status Status { get; set; } = null!;
     public virtual Company Company { get; set; } = null!;
 }

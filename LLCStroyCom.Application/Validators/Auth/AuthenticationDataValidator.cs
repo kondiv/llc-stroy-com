@@ -4,7 +4,7 @@ using LLCStroyCom.Domain.Dto;
 
 namespace LLCStroyCom.Application.Validators.Auth;
 
-public class AuthenticationDataValidator : AbstractValidator<RegistrationDataValidationDto>
+public sealed class AuthenticationDataValidator : AbstractValidator<RegistrationDataValidationDto>
 {
     public AuthenticationDataValidator()
     {

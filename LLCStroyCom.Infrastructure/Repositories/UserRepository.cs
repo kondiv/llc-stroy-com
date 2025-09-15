@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LLCStroyCom.Infrastructure.Repositories;
 
-public class UserRepository : IUserRepository
+public sealed class UserRepository : IUserRepository
 {
     private readonly StroyComDbContext _context;
 
@@ -34,14 +34,13 @@ public class UserRepository : IUserRepository
         }
     }
 
-    // TODO Write tests
     public async Task<ApplicationUser> GetAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return await _context.Users
                    .Include(u => u.RefreshTokens)
                    .Include(u => u.Role)
                    .FirstOrDefaultAsync(u => u.Id == id, cancellationToken)
-               ?? throw UserCouldNotBeFound.WithId(id);
+               ?? throw CouldNotFindUser.WithId(id);
     }
 
     public async Task<ApplicationUser> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
@@ -53,7 +52,7 @@ public class UserRepository : IUserRepository
         return await _context.Users
                    .Include(u => u.Role)
                    .FirstOrDefaultAsync(u => u.Email == email, cancellationToken)
-               ?? throw UserCouldNotBeFound.WithEmail(email);
+               ?? throw CouldNotFindUser.WithEmail(email);
     }
 
     public async Task AssignNewAndRevokeOldRefreshTokenAsync(Guid userId, RefreshToken refreshToken, CancellationToken cancellationToken = default)

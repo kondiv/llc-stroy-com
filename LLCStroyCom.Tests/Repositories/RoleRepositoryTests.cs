@@ -64,7 +64,7 @@ public class RoleRepositoryTests
     }
     
     [Fact]
-    public async Task GetByNameAsync_WhenRoleWithProvidedNameDoesNotExist_ShouldThrowRoleCouldNotBeFoundException()
+    public async Task GetByNameAsync_WhenRoleWithProvidedNameDoesNotExist_ShouldThrowCouldNotFindRoleException()
     {
         // Arrange
         var context = GetInMemoryDbContext();
@@ -75,7 +75,7 @@ public class RoleRepositoryTests
         var act = () => roleRepository.GetByNameAsync(roleName);
         
         // Assert
-        await Assert.ThrowsAsync<RoleCouldNotBeFound>(act);
+        await Assert.ThrowsAsync<CouldNotFindRole>(act);
     }
 
     [Fact]

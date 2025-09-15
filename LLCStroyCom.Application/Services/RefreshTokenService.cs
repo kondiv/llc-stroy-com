@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 
 namespace LLCStroyCom.Application.Services;
 
-public class RefreshTokenService : IRefreshTokenService
+public sealed class RefreshTokenService : IRefreshTokenService
 {
     private readonly IRefreshTokenRepository _refreshTokenRepository;
     private readonly IUserRepository _userRepository;

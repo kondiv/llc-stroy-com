@@ -115,13 +115,13 @@ public class RefreshTokenServiceTests
         
         _refreshTokenRepositoryMock
             .Setup(r => r.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(UserCouldNotBeFound.WithId(userId));
+            .ThrowsAsync(CouldNotFindUser.WithId(userId));
         
         // Act
         var act = () => _refreshTokenService.RefreshAsync(plainRefreshToken);
         
         // Assert
-        await Assert.ThrowsAsync<UserCouldNotBeFound>(act);
+        await Assert.ThrowsAsync<CouldNotFindUser>(act);
     }
 
     [Fact]

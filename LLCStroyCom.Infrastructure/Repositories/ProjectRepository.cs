@@ -1,9 +1,15 @@
-﻿using LLCStroyCom.Domain.Entities;
+﻿using Ardalis.Specification;
+using Ardalis.Specification.EntityFrameworkCore;
+using LLCStroyCom.Domain.Entities;
+using LLCStroyCom.Domain.Enums;
+using LLCStroyCom.Domain.Exceptions;
+using LLCStroyCom.Domain.Models.PageTokens;
 using LLCStroyCom.Domain.Repositories;
+using Microsoft.EntityFrameworkCore;
 
 namespace LLCStroyCom.Infrastructure.Repositories;
 
-public class ProjectRepository : IProjectRepository
+public sealed class ProjectRepository : IProjectRepository
 {
     private readonly StroyComDbContext _context;
 
@@ -20,8 +26,35 @@ public class ProjectRepository : IProjectRepository
         await _context.SaveChangesAsync(cancellationToken);
     }
 
-    public Task<Project> GetAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<Project> GetAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var project = await _context.Projects.FindAsync([id], cancellationToken);
+        
+        return project ?? throw CouldNotFindProject.WithId(id);
+    }
+
+    public async Task<IEnumerable<Project>> ListAsync(List<ISpecification<Project>> specifications, int maxPageSize, ProjectPageToken pageToken,
+        CancellationToken cancellationToken = default)
+    {
+        var query = _context.Projects.AsQueryable();
+
+        foreach (var specification in specifications)
+        {
+            query = SpecificationEvaluator.Default.GetQuery(query, specification);
+        }
+
+        return await query.ToListAsync(cancellationToken);
+    }
+
+    public async Task ChangeStatusAsync(Guid id, Status status, CancellationToken cancellationToken = default)
+    {
+        var project = await GetAsync(id, cancellationToken);
+
+        if (project.Status != status)
+        {
+            project.Status = status;
+        }
+        
+        await _context.SaveChangesAsync(cancellationToken);
     }
 }

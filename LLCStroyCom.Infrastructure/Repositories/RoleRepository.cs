@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LLCStroyCom.Infrastructure.Repositories;
 
-public class RoleRepository : IRoleRepository
+public sealed class RoleRepository : IRoleRepository
 {
     private readonly StroyComDbContext _context;
 
@@ -21,7 +21,7 @@ public class RoleRepository : IRoleRepository
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
         
         var role = await _context.Roles.FirstOrDefaultAsync(r => r.Type == name, cancellationToken)
-                   ?? throw RoleCouldNotBeFound.WithName(name);
+                   ?? throw CouldNotFindRole.WithName(name);
 
         return role;
     }

@@ -1,5 +1,6 @@
 ﻿using LLCStroyCom.Domain;
 using LLCStroyCom.Domain.Entities;
+using LLCStroyCom.Domain.Enums;
 using LLCStroyCom.Domain.Exceptions;
 using LLCStroyCom.Domain.Repositories;
 using LLCStroyCom.Infrastructure;
@@ -14,11 +15,11 @@ public class ProjectRepositoryTests
 
     public ProjectRepositoryTests()
     {
-        var context = GetInMemoryContext();
+        var context = GetInMemoryDbContext();
         _projectRepository = new ProjectRepository(context);
     }
 
-    private StroyComDbContext GetInMemoryContext()
+    private StroyComDbContext GetInMemoryDbContext()
     {
         var options = new DbContextOptionsBuilder<StroyComDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
@@ -44,7 +45,7 @@ public class ProjectRepositoryTests
     public async Task CreateAsync_WhenProjectIsValidEntity_ShouldCreateProject()
     {
         // Arrange
-        var context = GetInMemoryContext();
+        var context = GetInMemoryDbContext();
         IProjectRepository projectRepository = new ProjectRepository(context);
         
         var project = new Project()
@@ -76,7 +77,7 @@ public class ProjectRepositoryTests
             Name = "Жилой комплекс"
         };
         
-        var context = GetInMemoryContext();
+        var context = GetInMemoryDbContext();
         IProjectRepository projectRepository = new ProjectRepository(context);
 
         await context.Projects.AddAsync(project);
@@ -136,9 +137,15 @@ public class ProjectRepositoryTests
             Status = Status.Completed,
             CompanyId = companyId
         };
+
+        var context = GetInMemoryDbContext();
+        IProjectRepository projectRepository = new ProjectRepository(context);
+
+        await context.Projects.AddAsync(project);
+        await context.SaveChangesAsync();
         
         // Act
-        var result = await _projectRepository.GetAsync(projectId);
+        var result = await projectRepository.GetAsync(projectId);
         
         // Assert
         Assert.Equal(projectId, result.Id);
@@ -148,13 +155,109 @@ public class ProjectRepositoryTests
     }
 
     [Fact]
-    public async Task GetAsync_WhenProjectDoesNotExist_ShouldThrowProjectCouldNotBeFound()
+    public async Task GetAsync_WhenProjectDoesNotExist_ShouldThrowCouldNotFindProject()
     {
         // Arrange
         // Act
         var act = () => _projectRepository.GetAsync(Guid.NewGuid());
         
         // Assert
-        await Assert.ThrowsAsync<ProjectCouldNotBeFound>(act);
+        await Assert.ThrowsAsync<CouldNotFindProject>(act);
+    }
+
+    [Fact]
+    public async Task GetAsync_WhenOperationIsCanceled_ShouldThrowOperationCanceledException()
+    {
+        // Arrange
+        var cancellationToken = new CancellationToken(canceled: true);
+        
+        // Act
+        var act = () => _projectRepository.GetAsync(Guid.NewGuid(), cancellationToken);
+        
+        // Assert
+        await Assert.ThrowsAsync<OperationCanceledException>(act);
+    }
+
+    [Fact]
+    public async Task ChangeStatusAsync_WhenProjectExists_ShouldChangeProjectStatus()
+    {
+        // Arrange
+        var projectId = Guid.NewGuid();
+        var status = Status.InProgress;
+
+        var project = new Project()
+        {
+            Id = projectId,
+            Status = status,
+            CompanyId = Guid.NewGuid(),
+            Name = "георгиевск",
+            City = "Москва"
+        };
+
+        var context = GetInMemoryDbContext();
+        IProjectRepository projectRepository = new ProjectRepository(context);
+
+        await context.Projects.AddAsync(project);
+        await context.SaveChangesAsync();
+        
+        // Act
+        await projectRepository.ChangeStatusAsync(projectId, Status.OnReview);
+        
+        // Assert
+        Assert.NotEqual(status, project.Status);
+    }
+
+    [Fact]
+    public async Task ChangeStatusAsync_WhenProjectDoesNotExist_ShouldThrowCouldNotFindProject()
+    {
+        // Arrange
+        
+        // Act
+        var act = () => _projectRepository.ChangeStatusAsync(Guid.NewGuid(), Status.InProgress);
+        
+        // Assert
+        await Assert.ThrowsAsync<CouldNotFindProject>(act);
+    }
+
+    [Fact]
+    public async Task ChangeStatusAsync_WhenOperationIsCanceled_ShouldThrowOperationCanceledException()
+    {
+        // Arrange
+        var cancellationToken = new CancellationToken(canceled: true);
+        
+        // Act
+        var act = () => _projectRepository.ChangeStatusAsync(Guid.NewGuid(), Status.Canceled, cancellationToken);
+        
+        // Assert
+        await Assert.ThrowsAsync<OperationCanceledException>(act);
+    }
+
+    [Fact]
+    public async Task ChangeStatusAsync_WhenStatusesAreEqual_ShouldNotUpdateProject()
+    {
+        // Arrange
+        var projectId = Guid.NewGuid();
+        var status = Status.InProgress;
+
+        var project = new Project()
+        {
+            Id = projectId,
+            Status = status,
+            CompanyId = Guid.NewGuid(),
+            Name = "георгиевск",
+            City = "Москва"
+        };
+
+        var context = GetInMemoryDbContext();
+        IProjectRepository projectRepository = new ProjectRepository(context);
+
+        await context.Projects.AddAsync(project);
+        await context.SaveChangesAsync();
+        
+        // Act
+        await projectRepository.ChangeStatusAsync(projectId, status); // using same status
+        
+        // Assert
+        Assert.Equal(status, project.Status);
     }
 }

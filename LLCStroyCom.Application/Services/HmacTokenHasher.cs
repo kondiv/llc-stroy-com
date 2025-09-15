@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 
 namespace LLCStroyCom.Application.Services;
 
-public class HmacTokenHasher : ITokenHasher
+public sealed class HmacTokenHasher : ITokenHasher
 {
     private readonly byte[] _keyBytes;
 

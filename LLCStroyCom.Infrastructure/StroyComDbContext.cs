@@ -162,6 +162,8 @@ public class StroyComDbContext : DbContext
             
             entity.HasKey(e => e.Id);
             
+            entity.HasIndex(e => e.Name).IsUnique();
+            
             entity.Property(e => e.Id)
                 .HasDefaultValueSql("uuid_generate_v4()")
                 .ValueGeneratedOnAdd()

@@ -9,7 +9,7 @@ using Microsoft.Extensions.Logging;
 
 namespace LLCStroyCom.Application.Services;
 
-public class AuthService : IAuthService
+public sealed class AuthService : IAuthService
 {
     private readonly ITokenService _tokenService;
     private readonly IUserRepository _userRepository;
@@ -66,7 +66,7 @@ public class AuthService : IAuthService
 
             return Result.Success();
         }
-        catch (RoleCouldNotBeFound e)
+        catch (CouldNotFindRole e)
         {
             _logger.LogError(e, "Role \"{roleName}\" was not found. User was not created", roleName);
             return Result.Failure(new Error(e.Message, "AuthError"));
@@ -102,7 +102,7 @@ public class AuthService : IAuthService
             return Result<PlainJwtTokensDto>.Success(
                 new PlainJwtTokensDto(tokens.AccessToken, tokens.RefreshTokenDto.PlainRefreshToken));
         }
-        catch (UserCouldNotBeFound e)
+        catch (CouldNotFindUser e)
         {
             _logger.LogError(e, "User with email \"{email}\" could not be found ", email);
             return Result<PlainJwtTokensDto>.Failure(new Error(e.Message, "AuthError"));

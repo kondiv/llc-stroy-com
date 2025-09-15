@@ -1,4 +1,4 @@
-﻿namespace LLCStroyCom.Domain;
+﻿namespace LLCStroyCom.Domain.Enums;
 
 public enum Status
 {

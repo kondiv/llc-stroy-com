@@ -1,3 +1,5 @@
+using LLCStroyCom.Domain.Enums;
+
 namespace LLCStroyCom.Domain.Entities;
 
 public class Project

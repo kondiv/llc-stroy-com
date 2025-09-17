@@ -43,12 +43,54 @@ public class ProjectRepositoryTests
         await context.Companies.AddRangeAsync(company1, company2, company3);
         await context.SaveChangesAsync();
         
-        var project1 = new Project(){Name = "Project1", City = "Москва", CompanyId = company1.Id};
-        var project2 = new Project(){Name = "Project2", City = "Москва", CompanyId = company2.Id};
-        var project3 = new Project(){Name = "Project3", City = "НеМосква", CompanyId = company3.Id};
-        var project4 = new Project(){Name = "Project4", City = "НеМосква", CompanyId = company3.Id};
-        var project5 = new Project(){Name = "Project5", City = "Москва", CompanyId = company2.Id};
-        var project6 = new Project(){Name = "Project6", City = "НеМосква", CompanyId = company1.Id};
+        var project1 = new Project()
+        {
+            Name = "Project1",
+            City = "Москва",
+            CompanyId = company1.Id,
+            CreatedAt = DateTimeOffset.UtcNow,
+            Status = Status.InProgress
+        };
+        var project2 = new Project()
+        {
+            Name = "Project2",
+            City = "Москва",
+            CompanyId = company2.Id,
+            CreatedAt = DateTimeOffset.UtcNow.AddMinutes(5),
+            Status = Status.Canceled
+        };
+        var project3 = new Project()
+        {
+            Name = "Project3",
+            City = "НеМосква",
+            CompanyId = company3.Id,
+            CreatedAt = DateTimeOffset.UtcNow.AddMinutes(10),
+            Status = Status.InProgress
+        };
+        var project4 = new Project()
+        {
+            Name = "Project4",
+            City = "НеМосква",
+            CompanyId = company3.Id,
+            CreatedAt = DateTimeOffset.UtcNow.AddMinutes(15),
+            Status = Status.Completed
+        };
+        var project5 = new Project()
+        {
+            Name = "Project5",
+            City = "Москва",
+            CompanyId = company2.Id,
+            CreatedAt = DateTimeOffset.UtcNow.AddMinutes(20),
+            Status = Status.Completed
+        };
+        var project6 = new Project()
+        {
+            Name = "Project6",
+            City = "НеМосква",
+            CompanyId = company1.Id,
+            CreatedAt = DateTimeOffset.UtcNow.AddMinutes(25),
+            Status = Status.New
+        };
         
         await context.Projects.AddRangeAsync(project1, project2, project3, project4, project5, project6);
         await context.SaveChangesAsync();
@@ -328,7 +370,7 @@ public class ProjectRepositoryTests
     }
 
     [Fact]
-    public async Task ListAsync_WhenOrderByName_ShouldReturnOrderedList()
+    public async Task ListAsync_WhenOrderByNameAsc_ShouldReturnOrderedList()
     {
         // Arrange
         var projectFilter = new ProjectFilter()
@@ -345,5 +387,214 @@ public class ProjectRepositoryTests
         // Act
         var result = await projectRepository.ListAsync(specification);
         var listResult = result.ToList();
+        
+        // Assert
+        Assert.Equal("Project1", listResult[0].Name);
+        Assert.Equal("Project2", listResult[1].Name);
+        Assert.Equal("Project3", listResult[2].Name);
+        Assert.Equal("Project4", listResult[3].Name);
+        Assert.Equal("Project5", listResult[4].Name);
+        Assert.Equal("Project6", listResult[5].Name);
+    }
+
+    [Fact]
+    public async Task ListAsync_WhenOrderByNameDesc_ShouldReturnOrderedList()
+    {
+        // Arrange
+        var projectFilter = new ProjectFilter()
+        {
+            OrderBy = "name",
+            Descending = true,
+        };
+        ProjectPageToken? pageToken = null;
+        var maxPageSize = 5;
+        var specification = new ProjectSpecification(projectFilter, pageToken, maxPageSize);
+        
+        var context = await GetFilledInMemoryDbContextAsync();
+        IProjectRepository projectRepository = new ProjectRepository(context);
+        
+        // Act
+        var result = await projectRepository.ListAsync(specification);
+        var listResult = result.ToList();
+        
+        // Assert
+        Assert.Equal("Project6", listResult[0].Name);
+        Assert.Equal("Project5", listResult[1].Name);
+        Assert.Equal("Project4", listResult[2].Name);
+        Assert.Equal("Project3", listResult[3].Name);
+        Assert.Equal("Project2", listResult[4].Name);
+        Assert.Equal("Project1", listResult[5].Name);
+    }
+
+    [Fact]
+    public async Task ListAsync_WhenOrderByCreatedAtAsc_ShouldReturnOrderedList()
+    {
+        // Arrange
+        var projectFilter = new ProjectFilter()
+        {
+            OrderBy = "created-at",
+        };
+        ProjectPageToken? pageToken = null;
+        var maxPageSize = 5;
+        var specification = new ProjectSpecification(projectFilter, pageToken, maxPageSize);
+        
+        var context = await GetFilledInMemoryDbContextAsync();
+        IProjectRepository projectRepository = new ProjectRepository(context);
+        
+        // Act
+        var result = await projectRepository.ListAsync(specification);
+        var listResult = result.ToList();
+        
+        // Assert
+        Assert.True(listResult[0].CreatedAt < listResult[1].CreatedAt);
+    }
+
+    [Fact]
+    public async Task ListAsync_WhenOrderByCreatedAtDesc_ShouldReturnOrderedList()
+    {
+        // Arrange
+        var projectFilter = new ProjectFilter()
+        {
+            OrderBy = "created-at",
+            Descending = true,
+        };
+        ProjectPageToken? pageToken = null;
+        var maxPageSize = 5;
+        var specification = new ProjectSpecification(projectFilter, pageToken, maxPageSize);
+
+        var context = await GetFilledInMemoryDbContextAsync();
+        IProjectRepository projectRepository = new ProjectRepository(context);
+
+        // Act
+        var result = await projectRepository.ListAsync(specification);
+        var listResult = result.ToList();
+        // Assert
+        Assert.True(listResult[0].CreatedAt > listResult[1].CreatedAt);
+    }
+
+    [Fact]
+    public async Task ListAsync_WhenFilteredByCity_ShouldReturnFilteredProjectList()
+    {
+        // Arrange
+        var projectFilter = new ProjectFilter()
+        {
+            City = "Москва",
+        };
+        ProjectPageToken? pageToken = null;
+        var maxPageSize = 5;
+        var specification = new ProjectSpecification(projectFilter, pageToken, maxPageSize);
+        
+        var context = await GetFilledInMemoryDbContextAsync();
+        IProjectRepository projectRepository = new ProjectRepository(context);
+        
+        // Act
+        var result = await projectRepository.ListAsync(specification);
+        var resultList = result.ToList();
+        
+        // Assert
+        Assert.All(resultList, p => Assert.Equal("Москва", p.City));
+    }
+
+    [Fact]
+    public async Task ListAsync_WhenFilteredByStatus_ShouldReturnFilteredProjectList()
+    {
+        // Arrange
+        var projectFilter = new ProjectFilter()
+        {
+            Status = Status.InProgress,
+        };
+        ProjectPageToken? pageToken = null;
+        var maxPageSize = 5;
+        var specification = new ProjectSpecification(projectFilter, pageToken, maxPageSize);
+        
+        var context = await GetFilledInMemoryDbContextAsync();
+        IProjectRepository projectRepository = new ProjectRepository(context);
+        
+        // Act
+        var result = await projectRepository.ListAsync(specification);
+        var resultList = result.ToList();
+        
+        // Assert
+        Assert.All(resultList, p => Assert.Equal(Status.InProgress, p.Status));
+    }
+
+    [Fact]
+    public async Task ListAsync_WhenTwoFiltersAreApplied_ShouldReturnFilteredProjectList()
+    {
+        // Arrange
+        var projectFilter = new ProjectFilter()
+        {
+            Status = Status.InProgress,
+            City = "Москва"
+        };
+        ProjectPageToken? pageToken = null;
+        var maxPageSize = 5;
+        var specification = new ProjectSpecification(projectFilter, pageToken, maxPageSize);
+        
+        var context = await GetFilledInMemoryDbContextAsync();
+        IProjectRepository projectRepository = new ProjectRepository(context);
+        
+        // Act
+        var result = await projectRepository.ListAsync(specification);
+        var resultList = result.ToList();
+        
+        // Assert
+        Assert.All(resultList, p =>
+        {
+            Assert.Multiple(() =>
+            {
+                Assert.Equal(Status.InProgress, p.Status);
+                Assert.Equal("Москва", p.City);
+            });
+        });
+    }
+
+    [Fact]
+    public async Task ListAsync_WhenFilterAndOrderByApplied_ShouldReturnFilteredAndOrderedProjectList()
+    {
+        // Arrange
+        var projectFilter = new ProjectFilter()
+        {
+            OrderBy = "name",
+            City = "Москва"
+        };
+        ProjectPageToken? pageToken = null;
+        var maxPageSize = 5;
+        var specification = new ProjectSpecification(projectFilter, pageToken, maxPageSize);
+        
+        var context = await GetFilledInMemoryDbContextAsync();
+        IProjectRepository projectRepository = new ProjectRepository(context);
+        
+        // Act
+        var result = await projectRepository.ListAsync(specification);
+        var resultList = result.ToList();
+
+        // Assert
+        Assert.True(string.Compare(resultList[0].Name, resultList[1].Name, StringComparison.Ordinal) < 0);
+        Assert.All(resultList, p => Assert.Equal("Москва", p.City));
+    }
+
+    [Fact]
+    public async Task ListAsync_WhenOperationIsCanceled_ShouldThrowOperationCanceledException()
+    {
+        // Arrange
+        var projectFilter = new ProjectFilter()
+        {
+            OrderBy = "name",
+            City = "Москва"
+        };
+        ProjectPageToken? pageToken = null;
+        var maxPageSize = 5;
+        var specification = new ProjectSpecification(projectFilter, pageToken, maxPageSize);
+        var cancellationToken = new CancellationToken(canceled: true);
+        
+        var context = await GetFilledInMemoryDbContextAsync();
+        IProjectRepository projectRepository = new ProjectRepository(context);
+        
+        // Act
+        var act = () => projectRepository.ListAsync(specification, cancellationToken);
+        
+        // Assert
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(act);
     }
 }

@@ -4,6 +4,8 @@ using LLCStroyCom.Domain.Enums;
 using LLCStroyCom.Domain.Exceptions;
 using LLCStroyCom.Domain.Models.PageTokens;
 using LLCStroyCom.Domain.Services;
+using LLCStroyCom.Domain.Specifications;
+using LLCStroyCom.Domain.Specifications.Projects;
 
 namespace LLCStroyCom.Tests.Services;
 
@@ -29,7 +31,7 @@ public class PageTokenServiceTests
         {
             ProjectId = Guid.NewGuid(),
             ProjectName = "Test Project",
-            OrderBy = OrderBy.NameAsc,
+            OrderBy = "Name",
             CreatedAt = DateTimeOffset.UtcNow
         };
 
@@ -50,7 +52,7 @@ public class PageTokenServiceTests
         {
             ProjectId = Guid.NewGuid(),
             ProjectName = "Test Project",
-            OrderBy = OrderBy.NameAsc,
+            OrderBy = "Name",
             CreatedAt = DateTimeOffset.UtcNow,
             ProjectCreatedAt = DateTimeOffset.UtcNow.AddDays(-1)
         };
@@ -77,7 +79,7 @@ public class PageTokenServiceTests
         {
             ProjectId = Guid.NewGuid(),
             ProjectName = "Round Trip Test",
-            OrderBy = OrderBy.NameAsc,
+            OrderBy = "Name",
             CreatedAt = DateTimeOffset.UtcNow
         };
 
@@ -153,7 +155,7 @@ public class PageTokenServiceTests
         {
             ProjectId = Guid.NewGuid(),
             ProjectName = "Test",
-            OrderBy = OrderBy.NameAsc,
+            OrderBy = "Name",
             CreatedAt = DateTimeOffset.UtcNow
         };
 
@@ -171,7 +173,7 @@ public class PageTokenServiceTests
         {
             ProjectId = Guid.NewGuid(),
             ProjectName = null, // null property
-            OrderBy = OrderBy.NameAsc,
+            OrderBy = "Name",
             CreatedAt = DateTimeOffset.UtcNow,
             ProjectCreatedAt = null // null property
         };
@@ -193,7 +195,7 @@ public class PageTokenServiceTests
         {
             ProjectId = Guid.NewGuid(),
             ProjectName = "", // empty string
-            OrderBy = OrderBy.NameAsc,
+            OrderBy = "Name",
             CreatedAt = DateTimeOffset.UtcNow
         };
 
@@ -213,7 +215,7 @@ public class PageTokenServiceTests
         {
             ProjectId = Guid.NewGuid(),
             ProjectName = "DateTime Test",
-            OrderBy = OrderBy.NameAsc,
+            OrderBy = "Name",
             CreatedAt = DateTimeOffset.MinValue,
             ProjectCreatedAt = DateTimeOffset.MaxValue
         };
@@ -231,11 +233,17 @@ public class PageTokenServiceTests
     public void EncodeDecode_MultipleTokens_WorkIndependently()
     {
         // Arrange
+        var orderBy1 = "Name";
+        var orderBy2 = "Name";
+        var desc1 = true;
+        var desc2 = false;
+        
         var token1 = new ProjectPageToken
         {
             ProjectId = Guid.NewGuid(),
             ProjectName = "First",
-            OrderBy = OrderBy.NameAsc,
+            OrderBy = orderBy1,
+            Descending = desc1,
             CreatedAt = DateTimeOffset.UtcNow
         };
 
@@ -243,7 +251,8 @@ public class PageTokenServiceTests
         {
             ProjectId = Guid.NewGuid(),
             ProjectName = "Second",
-            OrderBy = OrderBy.NameAsc,
+            OrderBy = orderBy2,
+            Descending = desc2,
             CreatedAt = DateTimeOffset.UtcNow.AddHours(1)
         };
 
@@ -257,9 +266,7 @@ public class PageTokenServiceTests
         // Assert
         Assert.Equal("First", decoded1.ProjectName);
         Assert.Equal("Second", decoded2.ProjectName);
-        Assert.Equal(OrderBy.NameAsc, decoded1.OrderBy);
-        Assert.Equal(OrderBy.NameAsc, decoded2.OrderBy);
+        Assert.Equal(orderBy1, decoded1.OrderBy);
+        Assert.Equal(orderBy2, decoded2.OrderBy);
     }
-    
-    
 }

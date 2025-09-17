@@ -1,3 +1,5 @@
-﻿namespace LLCStroyCom.Domain.Dto;
+﻿using LLCStroyCom.Domain.Enums;
 
-public record ProjectDto(string Name, string City, string CompanyName, int Status, DateTimeOffset CreatedAt);
+namespace LLCStroyCom.Domain.Dto;
+
+public record ProjectDto(string Name, string City, Guid CompanyId, Status Status, DateTimeOffset CreatedAt);

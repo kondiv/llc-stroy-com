@@ -1,9 +1,9 @@
-﻿using LLCStroyCom.Domain.Enums;
-
-namespace LLCStroyCom.Domain.Models.PageTokens;
+﻿namespace LLCStroyCom.Domain.Models.PageTokens;
 
 public class PageToken : IPageToken
 {
-    public OrderBy OrderBy { get; set; }
+    public bool HasNextPage { get; set; }
+    public string OrderBy { get; set; } = null!;
+    public bool Descending { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
 }

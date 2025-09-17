@@ -1,8 +1,6 @@
-﻿using Ardalis.Specification;
-using LLCStroyCom.Api.Requests;
-using LLCStroyCom.Domain.Entities;
-using LLCStroyCom.Domain.Repositories;
-using LLCStroyCom.Domain.Specifications.Projects;
+﻿using LLCStroyCom.Api.Requests.Projects;
+using LLCStroyCom.Domain.Dto;
+using LLCStroyCom.Domain.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LLCStroyCom.Api.Controllers;
@@ -11,17 +9,20 @@ namespace LLCStroyCom.Api.Controllers;
 [Route("api/projects")]
 public class ProjectsController : ControllerBase
 {
-    private readonly IProjectRepository _repository;
+    private readonly IProjectService _projectService;
 
-    public ProjectsController(IProjectRepository repository)
+    public ProjectsController(IProjectService projectService)
     {
-        _repository = repository;
+        _projectService = projectService;
     }
     
     [HttpGet("list")]
-    public async Task<ActionResult<IEnumerable<Project>>> ListAsync([FromQuery] ProjectsQuery query,
+    public async Task<ActionResult<PaginatedProjectListResponse>> ListAsync([FromQuery] ProjectsQuery query,
         CancellationToken cancellationToken = default)
     {
-        return Ok();
+        var result =
+            await _projectService.ListAsync(query.PageToken, query.ProjectFilter, query.MaxPageSize, cancellationToken);
+
+        return Ok(result);
     }
 }

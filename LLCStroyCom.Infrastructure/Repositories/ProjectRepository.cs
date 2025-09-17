@@ -1,10 +1,10 @@
-﻿using Ardalis.Specification;
-using Ardalis.Specification.EntityFrameworkCore;
+﻿using Ardalis.Specification.EntityFrameworkCore;
 using LLCStroyCom.Domain.Entities;
 using LLCStroyCom.Domain.Enums;
 using LLCStroyCom.Domain.Exceptions;
 using LLCStroyCom.Domain.Models.PageTokens;
 using LLCStroyCom.Domain.Repositories;
+using LLCStroyCom.Domain.Specifications.Projects;
 using Microsoft.EntityFrameworkCore;
 
 namespace LLCStroyCom.Infrastructure.Repositories;
@@ -33,16 +33,12 @@ public sealed class ProjectRepository : IProjectRepository
         return project ?? throw CouldNotFindProject.WithId(id);
     }
 
-    public async Task<IEnumerable<Project>> ListAsync(List<ISpecification<Project>> specifications, int maxPageSize, ProjectPageToken pageToken,
-        CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<Project>> ListAsync(ProjectSpecification specification, CancellationToken cancellationToken = default)
     {
         var query = _context.Projects.AsQueryable();
-
-        foreach (var specification in specifications)
-        {
-            query = SpecificationEvaluator.Default.GetQuery(query, specification);
-        }
-
+        
+        query = SpecificationEvaluator.Default.GetQuery(query, specification);
+        
         return await query.ToListAsync(cancellationToken);
     }
 

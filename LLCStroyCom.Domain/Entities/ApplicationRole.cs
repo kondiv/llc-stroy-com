@@ -3,6 +3,6 @@
 public class ApplicationRole
 {
     public int Id { get; set; }
-    public string Type { get; set; }
-    public ICollection<ApplicationUser> Users { get; set; }
+    public string Type { get; set; } = null!;
+    public ICollection<ApplicationUser> Users { get; set; } = [];
 }

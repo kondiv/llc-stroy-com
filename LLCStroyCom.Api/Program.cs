@@ -48,6 +48,7 @@ builder.Services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
 builder.Services.AddSingleton<ITokenHasher>(new HmacTokenHasher(hmacSecret));
 builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
 builder.Services.AddScoped<IPageTokenService, PageTokenService>();
+builder.Services.AddScoped<IProjectService, ProjectService>();
 
 #endregion
 

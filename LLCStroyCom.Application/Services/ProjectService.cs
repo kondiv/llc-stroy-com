@@ -31,14 +31,33 @@ public class ProjectService : IProjectService
         var specification = new ProjectSpecification(filter, token, maxPageSize);
 
         var projects = await _projectRepository.ListAsync(specification, cancellationToken);
-
-        var projectsList = projects.ToList();
-        var hasNextPage = false;
         
+        
+        var projectsList = projects.ToList();
+        if (projectsList.Count == 0)
+        {
+            return new PaginatedProjectListResponse()
+            {
+                Projects = new List<ProjectDto>(),
+                PageToken = null
+            };
+        }
+        
+        var hasNextPage = false;
         if (projectsList.Count > maxPageSize)
         {
             hasNextPage = true;
             projectsList.Remove(projectsList.Last());
+        }
+
+        if (!hasNextPage)
+        {
+            return new PaginatedProjectListResponse()
+            {
+                Projects = projectsList.Select(p => new ProjectDto(p.Name, p.City, p.CompanyId, p.Status, p.CreatedAt))
+                    .ToList(),
+                PageToken = null
+            };
         }
 
         var currentToken = new ProjectPageToken()

@@ -1,8 +1,12 @@
-﻿using LLCStroyCom.Domain;
+﻿using System.Net.Mime;
+using LLCStroyCom.Domain;
 using LLCStroyCom.Domain.Entities;
 using LLCStroyCom.Domain.Enums;
 using LLCStroyCom.Domain.Exceptions;
+using LLCStroyCom.Domain.Models.Filters.Project;
+using LLCStroyCom.Domain.Models.PageTokens;
 using LLCStroyCom.Domain.Repositories;
+using LLCStroyCom.Domain.Specifications.Projects;
 using LLCStroyCom.Infrastructure;
 using LLCStroyCom.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -26,6 +30,30 @@ public class ProjectRepositoryTests
             .Options;
         
         return new StroyComDbContext(options);
+    }
+
+    private async Task<StroyComDbContext> GetFilledInMemoryDbContextAsync()
+    {
+        var context = GetInMemoryDbContext();
+        
+        var company1 = new Company(){Id = Guid.NewGuid(), Name = "Company1"};
+        var company2 = new Company(){Id = Guid.NewGuid(), Name = "Company2"};
+        var company3 = new Company(){Id = Guid.NewGuid(), Name = "Company3"};
+        
+        await context.Companies.AddRangeAsync(company1, company2, company3);
+        await context.SaveChangesAsync();
+        
+        var project1 = new Project(){Name = "Project1", City = "Москва", CompanyId = company1.Id};
+        var project2 = new Project(){Name = "Project2", City = "Москва", CompanyId = company2.Id};
+        var project3 = new Project(){Name = "Project3", City = "НеМосква", CompanyId = company3.Id};
+        var project4 = new Project(){Name = "Project4", City = "НеМосква", CompanyId = company3.Id};
+        var project5 = new Project(){Name = "Project5", City = "Москва", CompanyId = company2.Id};
+        var project6 = new Project(){Name = "Project6", City = "НеМосква", CompanyId = company1.Id};
+        
+        await context.Projects.AddRangeAsync(project1, project2, project3, project4, project5, project6);
+        await context.SaveChangesAsync();
+
+        return context;
     }
 
     [Fact]
@@ -259,5 +287,63 @@ public class ProjectRepositoryTests
         
         // Assert
         Assert.Equal(status, project.Status);
+    }
+
+    [Fact]
+    public async Task ListAsync_WhenEverythingIsAlright_ShouldReturnProjectsList()
+    {
+        // Arrange
+        var projectFilter = new ProjectFilter();
+        ProjectPageToken? pageToken = null;
+        var maxPageSize = 5;
+
+        var specification = new ProjectSpecification(projectFilter, pageToken, maxPageSize);
+        var context = await GetFilledInMemoryDbContextAsync();
+        IProjectRepository projectRepository = new ProjectRepository(context);
+        
+        // Act
+        var result = await projectRepository.ListAsync(specification);
+        
+        // Assert
+        Assert.NotEmpty(result);
+    }
+
+    [Fact]
+    public async Task ListAsync_ShouldReturnOneAdditionalEntity()
+    {
+        // Arrange
+        var projectFilter = new ProjectFilter();
+        ProjectPageToken? pageToken = null;
+        var maxPageSize = 5;
+        var specification = new ProjectSpecification(projectFilter, pageToken, maxPageSize);
+        
+        var context = await GetFilledInMemoryDbContextAsync();
+        IProjectRepository projectRepository = new ProjectRepository(context);
+        
+        // Act
+        var result = await projectRepository.ListAsync(specification);
+        
+        // Assert
+        Assert.Equal(maxPageSize + 1, result.Count());
+    }
+
+    [Fact]
+    public async Task ListAsync_WhenOrderByName_ShouldReturnOrderedList()
+    {
+        // Arrange
+        var projectFilter = new ProjectFilter()
+        {
+            OrderBy = "name",
+        };
+        ProjectPageToken? pageToken = null;
+        var maxPageSize = 5;
+        var specification = new ProjectSpecification(projectFilter, pageToken, maxPageSize);
+        
+        var context = await GetFilledInMemoryDbContextAsync();
+        IProjectRepository projectRepository = new ProjectRepository(context);
+        
+        // Act
+        var result = await projectRepository.ListAsync(specification);
+        var listResult = result.ToList();
     }
 }

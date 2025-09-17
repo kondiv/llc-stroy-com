@@ -3,5 +3,5 @@
 public class PaginatedProjectListResponse
 {
     public ICollection<ProjectDto> Projects { get; set; } = [];
-    public string PageToken { get; set; } = null!;
+    public string? PageToken { get; set; }
 }

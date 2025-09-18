@@ -211,4 +211,45 @@ public class ProjectServiceTests
         // Assert
         await Assert.ThrowsAsync<OperationCanceledException>(act);
     }
+    
+    [Fact]
+    public async Task ListAsync_WhenDecodingException_ShouldThrowEncodingException()
+    {
+        // Arrange
+        var projectFilter = new ProjectFilter();
+        var maxPageSize = 1;
+        var invalidPageToken = "wrong-format-or-something-is-wrong";
+        
+        _pageTokenServiceMock
+            .Setup(s => s.Decode<ProjectPageToken>(invalidPageToken))
+            .Throws(PageTokenDecodingException.ForToken(typeof(ProjectPageToken).Name));
+        
+        // Act
+        var act = () => _projectService.ListAsync(invalidPageToken, projectFilter, maxPageSize);
+        
+        // Assert
+        await Assert.ThrowsAsync<PageTokenDecodingException>(act);
+    }
+    
+    [Fact]
+    public async Task ListAsync_WhenEncodingException_ShouldThrowEncodingException()
+    {
+        // Arrange
+        var projectFilter = new ProjectFilter();
+        var maxPageSize = 1;
+
+        _projectRepositoryMock
+            .Setup(r => r.ListAsync(It.IsAny<ProjectSpecification>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Project>() { new Project(), new Project() });
+        
+        _pageTokenServiceMock
+            .Setup(s => s.Encode(It.IsAny<ProjectPageToken>()))
+            .Throws(PageTokenEncodingException.ForToken(typeof(ProjectPageToken).Name));
+        
+        // Act
+        var act = () => _projectService.ListAsync(null, projectFilter, maxPageSize);
+        
+        // Assert
+        await Assert.ThrowsAsync<PageTokenEncodingException>(act);
+    }
 }

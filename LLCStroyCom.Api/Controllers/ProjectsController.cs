@@ -1,6 +1,7 @@
 ﻿using LLCStroyCom.Api.Requests.Projects;
 using LLCStroyCom.Domain.Dto;
 using LLCStroyCom.Domain.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LLCStroyCom.Api.Controllers;
@@ -16,6 +17,7 @@ public class ProjectsController : ControllerBase
         _projectService = projectService;
     }
     
+    [Authorize]
     [HttpGet("list")]
     public async Task<ActionResult<PaginatedProjectListResponse>> ListAsync([FromQuery] ProjectsQuery query,
         CancellationToken cancellationToken = default)

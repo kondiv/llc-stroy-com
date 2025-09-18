@@ -20,7 +20,7 @@ public class PageTokenServiceTests
 
     private class UserPageToken : PageToken
     {
-        
+        public override string OrderBy { get; set; } = "email";
     }
 
     [Fact]

@@ -7,4 +7,6 @@ public interface IProjectService
 {
     Task<PaginatedProjectListResponse> ListAsync(string? plainPageToken, ProjectFilter filter, int maxPageSize,
         CancellationToken cancellationToken = default);
+
+    Task<ProjectDto> GetAsync(Guid id, CancellationToken cancellationToken = default);
 }

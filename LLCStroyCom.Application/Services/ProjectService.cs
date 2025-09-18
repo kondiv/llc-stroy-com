@@ -31,9 +31,8 @@ public class ProjectService : IProjectService
         var specification = new ProjectSpecification(filter, token, maxPageSize);
 
         var projects = await _projectRepository.ListAsync(specification, cancellationToken);
-        
-        
         var projectsList = projects.ToList();
+        
         if (projectsList.Count == 0)
         {
             return new PaginatedProjectListResponse()
@@ -79,5 +78,10 @@ public class ProjectService : IProjectService
                 .ToList(),
             PageToken = encodedToken
         };
+    }
+
+    public Task<ProjectDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
     }
 }

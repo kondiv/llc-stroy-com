@@ -8,16 +8,16 @@ namespace LLCStroyCom.Api.Controllers;
 
 [ApiController]
 [Route("api/projects")]
-public class ProjectsController : ControllerBase
+public class ProjectController : ControllerBase
 {
     private readonly IProjectService _projectService;
 
-    public ProjectsController(IProjectService projectService)
+    public ProjectController(IProjectService projectService)
     {
         _projectService = projectService;
     }
     
-    [Authorize]
+    [Authorize]    
     [HttpGet("list")]
     public async Task<ActionResult<PaginatedProjectListResponse>> ListAsync([FromQuery] ProjectsQuery query,
         CancellationToken cancellationToken = default)

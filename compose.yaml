@@ -12,7 +12,7 @@
       - Jwt__AccessTokenExpirationMinutes=${Jwt__AccessTokenExpirationMinutes}
       - Jwt__RefreshTokenExpirationDays=${Jwt__RefreshTokenExpirationDays}
       - HmacSecret=${HmacSecret}
-      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=${ASPNETCORE_URLS}
       - DOTNET_RUNNING_IN_CONTAINER=${DOTNET_RUNNING_IN_CONTAINER}
     ports:

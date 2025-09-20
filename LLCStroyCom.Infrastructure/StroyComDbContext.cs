@@ -14,6 +14,8 @@ public class StroyComDbContext : DbContext
     public DbSet<ApplicationUser> Users { get; set; }
     public DbSet<ApplicationRole> Roles { get; set; }
     public DbSet<RefreshToken> RefreshTokens { get; set; }
+    public DbSet<Project> Projects { get; set; }
+    public DbSet<Company> Companies { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -111,6 +113,66 @@ public class StroyComDbContext : DbContext
                 .WithMany(u => u.RefreshTokens)
                 .HasForeignKey(rt => rt.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Project>(entity =>
+        {
+            entity.ToTable("project");
+            
+            entity.HasKey(e => e.Id);
+            
+            entity.HasIndex(e => new {e.City, e.CompanyId, e.Name}).IsUnique();
+            
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("uuid_generate_v4()")
+                .ValueGeneratedOnAdd()
+                .HasColumnName("id");
+            
+            entity.Property(e => e.Name)
+                .IsRequired()
+                .HasMaxLength(255)
+                .HasColumnName("name");
+            
+            entity.Property(e => e.City)
+                .IsRequired()
+                .HasMaxLength(100)
+                .HasColumnName("city");
+            
+            entity.Property(e => e.CreatedAt)
+                .IsRequired()
+                .HasDefaultValueSql("now()")
+                .HasColumnName("created_at");
+            
+            entity.Property(e => e.Status)
+                .IsRequired()
+                .HasColumnName("status");
+            
+            entity.Property(e => e.CompanyId)
+                .IsRequired()
+                .HasColumnName("company_id");
+            
+            entity.HasOne(p => p.Company)
+                .WithMany(c => c.Projects)
+                .HasForeignKey(p => p.CompanyId);
+        });
+
+        modelBuilder.Entity<Company>(entity =>
+        {
+            entity.ToTable("company");
+            
+            entity.HasKey(e => e.Id);
+            
+            entity.HasIndex(e => e.Name).IsUnique();
+            
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("uuid_generate_v4()")
+                .ValueGeneratedOnAdd()
+                .HasColumnName("id");
+            
+            entity.Property(e => e.Name)
+                .IsRequired()
+                .HasMaxLength(127)
+                .HasColumnName("name");
         });
     }
 }

@@ -11,7 +11,7 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace LLCStroyCom.Application.Services;
 
-public class JwtTokenService : ITokenService
+public sealed class JwtTokenService : ITokenService
 {
     private readonly JwtSettings _jwtSettings;
     private readonly ITokenHasher _tokenHasher;

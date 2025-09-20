@@ -146,7 +146,7 @@ public class AuthServiceTests
 
         _roleRepositoryMock
             .Setup(r => r.GetByNameAsync(roleName, It.IsAny<CancellationToken>()))
-            .ThrowsAsync(RoleCouldNotBeFound.WithName(roleName));
+            .ThrowsAsync(CouldNotFindRole.WithName(roleName));
 
         // Act
         var result = await _authService.RegisterAsync(email, password, roleName);

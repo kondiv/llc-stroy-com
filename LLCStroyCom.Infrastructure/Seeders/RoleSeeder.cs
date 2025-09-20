@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LLCStroyCom.Infrastructure.Seeders;
 
-public class RoleSeeder
+public sealed class RoleSeeder
 {
     private readonly StroyComDbContext _context;
 

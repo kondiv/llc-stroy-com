@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LLCStroyCom.Infrastructure.Repositories;
 
-public class RefreshTokenRepository : IRefreshTokenRepository
+public sealed class RefreshTokenRepository : IRefreshTokenRepository
 {
     private readonly StroyComDbContext _context;
     private readonly ITokenHasher _tokenHasher;

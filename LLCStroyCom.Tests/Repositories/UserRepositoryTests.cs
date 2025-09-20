@@ -177,7 +177,7 @@ public class UserRepositoryTests
     }
 
     [Fact]
-    public async Task DeleteAsync_WhenUserWithProvidedIdDoesNotExist_ShouldThrowUserCouldNotBeFound()
+    public async Task DeleteAsync_WhenUserWithProvidedIdDoesNotExist_ShouldThrowCouldNotFindUser()
     {
         // Arrange
         var context = GetInMemoryDbContext();
@@ -187,7 +187,7 @@ public class UserRepositoryTests
         var act = () => userRepository.DeleteAsync(Guid.NewGuid());
         
         // Assert
-        await Assert.ThrowsAsync<UserCouldNotBeFound>(act);
+        await Assert.ThrowsAsync<CouldNotFindUser>(act);
     }
 
     [Fact]
@@ -270,7 +270,7 @@ public class UserRepositoryTests
     }
 
     [Fact]
-    public async Task GetByEmailAsync_WhenEmailIsValidAndUserDoesNotExist_ShouldThrowUserCouldNotBeFound()
+    public async Task GetByEmailAsync_WhenEmailIsValidAndUserDoesNotExist_ShouldThrowCouldNotFindUser()
     {
         // Arrange
         var context = GetInMemoryDbContext();
@@ -281,7 +281,7 @@ public class UserRepositoryTests
         var act = () => userRepository.GetByEmailAsync(email);
         
         // Assert
-        await Assert.ThrowsAsync<UserCouldNotBeFound>(act);
+        await Assert.ThrowsAsync<CouldNotFindUser>(act);
     }
 
     [Fact]
@@ -431,7 +431,7 @@ public class UserRepositoryTests
     }
 
     [Fact]
-    public async Task AssignRefreshTokenAsync_WhenUserDoesNotExist_ShouldThrowUserCouldNotBeFound()
+    public async Task AssignRefreshTokenAsync_WhenUserDoesNotExist_ShouldThrowCouldNotFindUser()
     {
         // Arrange
         var context = GetInMemoryDbContext();
@@ -443,7 +443,7 @@ public class UserRepositoryTests
         var act = () => userRepository.AssignNewAndRevokeOldRefreshTokenAsync(userId, refreshToken);
         
         // Assert
-        await Assert.ThrowsAsync<UserCouldNotBeFound>(act);
+        await Assert.ThrowsAsync<CouldNotFindUser>(act);
     }
 
     [Fact]

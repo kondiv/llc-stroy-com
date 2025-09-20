@@ -2,6 +2,7 @@ using System.Text;
 using LLCStroyCom.Application.Services;
 using LLCStroyCom.Application.Validators.Auth;
 using LLCStroyCom.Domain.Configs;
+using LLCStroyCom.Domain.Models.PageTokens;
 using LLCStroyCom.Domain.Repositories;
 using LLCStroyCom.Domain.Services;
 using LLCStroyCom.Infrastructure;
@@ -33,6 +34,7 @@ builder.Services.AddScoped<RoleSeeder>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
 
 #endregion
 
@@ -45,6 +47,8 @@ builder.Services.AddScoped<ITokenService, JwtTokenService>();
 builder.Services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
 builder.Services.AddSingleton<ITokenHasher>(new HmacTokenHasher(hmacSecret));
 builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
+builder.Services.AddScoped<IPageTokenService, PageTokenService>();
+builder.Services.AddScoped<IProjectService, ProjectService>();
 
 #endregion
 

@@ -80,8 +80,10 @@ public class ProjectService : IProjectService
         };
     }
 
-    public Task<ProjectDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<ProjectDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var project = await _projectRepository.GetAsync(id, cancellationToken);
+        
+        return new ProjectDto(project.Name, project.City, project.CompanyId, project.Status, project.CreatedAt);
     }
 }

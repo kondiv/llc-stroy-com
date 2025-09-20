@@ -5,6 +5,7 @@ using LLCStroyCom.Domain.Enums;
 using LLCStroyCom.Domain.Exceptions;
 using LLCStroyCom.Domain.Models.Filters.Project;
 using LLCStroyCom.Domain.Services;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 
@@ -108,7 +109,7 @@ public class ProjectControllerTests
         var result = await _controller.ListAsync(query);
         
         // Assert
-        Assert.IsType<BadRequestObjectResult>(result);
+        Assert.IsType<BadRequestObjectResult>(result.Result);
     }
 
     [Fact]
@@ -126,12 +127,75 @@ public class ProjectControllerTests
         var result = await _controller.ListAsync(query);
         
         // Assert
-        Assert.IsType<BadRequestObjectResult>(result);
+        Assert.IsType<BadRequestObjectResult>(result.Result);
     }
 
     [Fact]
     public async Task ListAsync_WhenNoProjects_ShouldReturnEmptyListAndNullPageToken()
     {
         // Arrange
+        _projectServiceMock
+            .Setup(s => s.ListAsync(It.IsAny<string>(), It.IsAny<ProjectFilter>(), It.IsAny<int>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PaginatedProjectListResponse() { Projects = new List<ProjectDto>(), PageToken = null });
+        
+        var query = new ProjectsQuery();
+        
+        // Act
+        var result = await _controller.ListAsync(query);
+        
+        // Assert
+        Assert.IsType<ActionResult<PaginatedProjectListResponse>>(result);
+        Assert.NotNull(result.Result);
+        
+        var actualResult = result.Result as OkObjectResult;
+        Assert.NotNull(actualResult);
+        Assert.Equal(200, actualResult.StatusCode);
+        
+        var value = actualResult.Value as PaginatedProjectListResponse;
+        Assert.NotNull(value);
+        Assert.Empty(value.Projects);
+        Assert.Null(value.PageToken);
+    }
+
+    [Fact]
+    public async Task GetAsync_WhenProjectExists_ShouldReturnOk()
+    {
+        // Arrange
+        _projectServiceMock
+            .Setup(s => s.GetAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProjectDto("name", "city", Guid.NewGuid(), Status.Completed, DateTimeOffset.UtcNow));
+        
+        // Act
+        var result = await _controller.GetAsync(Guid.NewGuid());
+        
+        // Assert
+        Assert.IsType<ActionResult<ProjectDto>>(result);
+        Assert.NotNull(result.Result);
+        
+        var actualResult = result.Result as OkObjectResult;
+        Assert.NotNull(actualResult);
+        Assert.Equal(200, actualResult.StatusCode);
+        
+        var value = actualResult.Value as ProjectDto;
+        Assert.NotNull(value);
+        Assert.Equal("name", value.Name);
+        Assert.Equal("city", value.City);
+    }
+
+    [Fact]
+    public async Task GetAsync_WhenProjectDoesNotExist_ShouldReturnNotFound()
+    {
+        // Arrange
+        _projectServiceMock
+            .Setup(s => s.GetAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(CouldNotFindProject.WithId(Guid.NewGuid()));
+        
+        // Act
+        var result = await _controller.GetAsync(Guid.NewGuid());
+        
+        // Assert
+        Assert.IsType<ActionResult<ProjectDto>>(result);
+        Assert.IsType<NotFoundObjectResult>(result.Result);
     }
 }

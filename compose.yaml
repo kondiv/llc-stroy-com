@@ -1,4 +1,31 @@
 ﻿services:
+  llcstroycom.api:
+    build:
+      context: .
+      dockerfile: LLCStroyCom.Api/Dockerfile
+    environment:
+      - Kestrel__Endpoints__Https__Certificate__Password=${CERT_PASSWORD}
+      - ConnectionStrings__DefaultConnection=${DEFAULT_CONNECTION}
+      - Jwt__Issuer=${Jwt__Issuer}
+      - Jwt__Audience=${Jwt__Audience}
+      - Jwt__Key=${Jwt__Key}
+      - Jwt__AccessTokenExpirationMinutes=${Jwt__AccessTokenExpirationMinutes}
+      - Jwt__RefreshTokenExpirationDays=${Jwt__RefreshTokenExpirationDays}
+      - HmacSecret=${HmacSecret}
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=${ASPNETCORE_URLS}
+      - DOTNET_RUNNING_IN_CONTAINER=${DOTNET_RUNNING_IN_CONTAINER}
+    ports:
+      - "5000:5000"
+      - "5001:5001"
+    depends_on:
+      database:
+        condition: service_healthy
+    volumes:
+      - ./certs:/https:ro
+    networks:
+      default:
+  
   database:
     image: postgres:latest
     restart: unless-stopped
@@ -10,17 +37,18 @@
       - main:/var/lib/postgresql/data
     ports:
       - "${DB_PORT}:5432"
+    networks:
+      default:
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U $DB_USER -d $DB_NAME" ]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 10s
-    deploy:
-      resources:
-        limits:
-          cpus: "1"
-          memory: 4G
 
 volumes:
   main:
+    
+networks:
+  default:
+    driver: bridge

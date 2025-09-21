@@ -7,6 +7,7 @@
 
    > https://localhost:7272
 ## Для запуска Production
+ВАЖНО Требуется .env файл, которого нет в публичном репозитории
 1. *Первый запуск* `docker-compose up --build` 
 2. *Не первый запуск* `docker-compose up -d`
 3. Доступ по следующим url:    

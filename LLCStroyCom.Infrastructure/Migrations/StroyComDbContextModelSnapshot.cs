@@ -103,6 +103,49 @@ namespace LLCStroyCom.Infrastructure.Migrations
                     b.ToTable("company", (string)null);
                 });
 
+            modelBuilder.Entity("LLCStroyCom.Domain.Entities.Defect", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("uuid_generate_v4()");
+
+                    b.Property<Guid?>("ChiefEngineerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("chief_engineer_id");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("description");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("name");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("project_id");
+
+                    b.Property<int>("Status")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("status");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChiefEngineerId");
+
+                    b.HasIndex("ProjectId");
+
+                    b.ToTable("defect", (string)null);
+                });
+
             modelBuilder.Entity("LLCStroyCom.Domain.Entities.Project", b =>
                 {
                     b.Property<Guid>("Id")
@@ -196,6 +239,23 @@ namespace LLCStroyCom.Infrastructure.Migrations
                     b.Navigation("Role");
                 });
 
+            modelBuilder.Entity("LLCStroyCom.Domain.Entities.Defect", b =>
+                {
+                    b.HasOne("LLCStroyCom.Domain.Entities.ApplicationUser", "ChiefEngineer")
+                        .WithMany("Defects")
+                        .HasForeignKey("ChiefEngineerId");
+
+                    b.HasOne("LLCStroyCom.Domain.Entities.Project", "Project")
+                        .WithMany("Defects")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ChiefEngineer");
+
+                    b.Navigation("Project");
+                });
+
             modelBuilder.Entity("LLCStroyCom.Domain.Entities.Project", b =>
                 {
                     b.HasOne("LLCStroyCom.Domain.Entities.Company", "Company")
@@ -225,12 +285,19 @@ namespace LLCStroyCom.Infrastructure.Migrations
 
             modelBuilder.Entity("LLCStroyCom.Domain.Entities.ApplicationUser", b =>
                 {
+                    b.Navigation("Defects");
+
                     b.Navigation("RefreshTokens");
                 });
 
             modelBuilder.Entity("LLCStroyCom.Domain.Entities.Company", b =>
                 {
                     b.Navigation("Projects");
+                });
+
+            modelBuilder.Entity("LLCStroyCom.Domain.Entities.Project", b =>
+                {
+                    b.Navigation("Defects");
                 });
 #pragma warning restore 612, 618
         }

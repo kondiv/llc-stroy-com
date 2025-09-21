@@ -95,7 +95,9 @@ jobs:
       run: dotnet build LLCStroyCom.sln --no-restore --configuration ${{ matrix.configuration }}
       
     - name: Test (${{ matrix.configuration }})
-      run: dotnet test LLCStroyCom.sln --no-build --configuration ${{ matrix.configuration }} --verbosity normal --logger trx --collect:"XPlat Code Coverage"
+      run: |
+        dotnet-coverage collect --output-format cobertura --output ./coverage.xml \
+        dotnet test LLCStroyCom.sln --no-build --configuration ${{ matrix.configuration }} --verbosity normal --logger trx --collect:"XPlat Code Coverage"
 
     - name: Publish Test Results
       uses: EnricoMi/publish-unit-test-result-action@v2.16.1
@@ -107,5 +109,5 @@ jobs:
       uses: irongut/CodeCoverageSummary@v1.3.0
       if: always()
       with:
-        filename: "**/coverage.cobertura.xml"
+        filename: "coverage.xml"
         format: markdown

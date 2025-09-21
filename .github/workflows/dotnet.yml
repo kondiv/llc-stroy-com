@@ -87,6 +87,9 @@ jobs:
         key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
         restore-keys: |
           ${{ runner.os }}-nuget-
+
+    - name: Install dotnet-coverage tool
+      run: dotnet tool install -g dotnet-coverage
         
     - name: Restore dependencies
       run: dotnet restore LLCStroyCom.sln

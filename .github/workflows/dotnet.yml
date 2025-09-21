@@ -28,8 +28,8 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore LLCStroyCom.sln
       
-    - name: Build (${{configuration}})
-      run: dotnet build LLCStroyCom.sln --no-restore --configuration ${{configuration}}
+    - name: Build (${{matrix.configuration}})
+      run: dotnet build LLCStroyCom.sln --no-restore --configuration ${{matrix.configuration}}
       
-    - name: Test (${{configuration}})
-      run: dotnet test LLCStroyCom.sln --no-build --configuration ${{configuration}} --verbosity normal
+    - name: Test (${{matrix.configuration}})
+      run: dotnet test LLCStroyCom.sln --no-build --configuration ${{matrix.configuration}} --verbosity normal

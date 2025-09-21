@@ -16,7 +16,6 @@ public class JwtTokenServiceTests
 {
     private readonly JwtTokenService _jwtTokenService;
     private readonly JwtSettings _jwtSettings;
-    private readonly ITokenHasher _tokenHasher;
 
     public JwtTokenServiceTests()
     {
@@ -32,8 +31,8 @@ public class JwtTokenServiceTests
         var jwtSettingsMock = new Mock<IOptions<JwtSettings>>();
         jwtSettingsMock.Setup(x => x.Value).Returns(_jwtSettings);
 
-        _tokenHasher = new HmacTokenHasher("very_secret_secret");
-        _jwtTokenService = new JwtTokenService(jwtSettingsMock.Object, _tokenHasher);
+        ITokenHasher tokenHasher = new HmacTokenHasher("very_secret_secret");
+        _jwtTokenService = new JwtTokenService(jwtSettingsMock.Object, tokenHasher);
     }
 
     private ApplicationUser CreateTestUser(string email = "test@example.com", string role = "User")
@@ -68,7 +67,7 @@ public class JwtTokenServiceTests
     {
         // Arrange & Act & Assert
         await Assert.ThrowsAsync<ArgumentNullException>(
-            () => _jwtTokenService.CreateTokensAsync(null));
+            () => _jwtTokenService.CreateTokensAsync(null!));
     }
 
     [Fact]
@@ -168,7 +167,7 @@ public class JwtTokenServiceTests
     public async Task CreateTokensAsync_DifferentUsers_ReturnDifferentAccessTokens()
     {
         // Arrange
-        var user1 = CreateTestUser("user1@example.com", "User");
+        var user1 = CreateTestUser("user1@example.com");
         var user2 = CreateTestUser("user2@example.com", "Admin");
 
         // Act
@@ -225,7 +224,7 @@ public class JwtTokenServiceTests
         // Arrange
         var adminUser = CreateTestUser("admin@test.com", "Administrator");
         var moderatorUser = CreateTestUser("moderator@test.com", "Moderator");
-        var regularUser = CreateTestUser("user@test.com", "User");
+        var regularUser = CreateTestUser("user@test.com");
 
         // Act
         var adminResult = await _jwtTokenService.CreateTokensAsync(adminUser);

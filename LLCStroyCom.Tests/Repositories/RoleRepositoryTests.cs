@@ -9,7 +9,7 @@ namespace LLCStroyCom.Tests.Repositories;
 
 public class RoleRepositoryTests
 {
-    private StroyComDbContext GetInMemoryDbContext()
+    private static StroyComDbContext GetInMemoryDbContext()
     {
         var options = new DbContextOptionsBuilder<StroyComDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
@@ -42,7 +42,7 @@ public class RoleRepositoryTests
         string? roleName = null;
         
         // Act
-        var act = () => roleRepository.GetByNameAsync(roleName);
+        var act = () => roleRepository.GetByNameAsync(roleName!);
         
         // Assert
         await Assert.ThrowsAsync<ArgumentNullException>(act);

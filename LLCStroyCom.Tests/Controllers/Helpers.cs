@@ -21,7 +21,7 @@ public class RequestCookieCollection : IRequestCookieCollection
 
     public IEnumerator<KeyValuePair<string, string>> GetEnumerator() => _cookies.GetEnumerator();
 
-    public bool TryGetValue(string key, out string? value)
+    public bool TryGetValue(string key, out string value)
     {
         var result = _cookies.TryGetValue(key, out var val);
         value = val;

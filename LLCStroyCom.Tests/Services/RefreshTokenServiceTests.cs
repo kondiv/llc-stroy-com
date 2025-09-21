@@ -35,7 +35,7 @@ public class RefreshTokenServiceTests
         string? plainRefreshToken = null;
         
         // Act
-        var act = () => _refreshTokenService.RefreshAsync(plainRefreshToken);
+        var act = () => _refreshTokenService.RefreshAsync(plainRefreshToken!);
         
         // Assert
         await Assert.ThrowsAsync<ArgumentNullException>(act);
@@ -88,7 +88,7 @@ public class RefreshTokenServiceTests
 
         _refreshTokenRepositoryMock
             .Setup(r => r.GetAsync(It.Is<string>(s => s == plainRefreshToken), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((RefreshToken)null);
+            .ReturnsAsync((RefreshToken)null!);
         
         // Act
         var act = () => _refreshTokenService.RefreshAsync(plainRefreshToken);
@@ -191,7 +191,7 @@ public class RefreshTokenServiceTests
         RefreshToken? refreshToken = null;
         
         // Act
-        var act = () => _refreshTokenService.RevokeAsync(refreshToken);
+        var act = () => _refreshTokenService.RevokeAsync(refreshToken!);
         
         // Assert
         await Assert.ThrowsAsync<ArgumentNullException>(act);

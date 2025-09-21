@@ -1,11 +1,8 @@
 ﻿using System.Text;
 using LLCStroyCom.Application.Services;
-using LLCStroyCom.Domain.Enums;
 using LLCStroyCom.Domain.Exceptions;
 using LLCStroyCom.Domain.Models.PageTokens;
 using LLCStroyCom.Domain.Services;
-using LLCStroyCom.Domain.Specifications;
-using LLCStroyCom.Domain.Specifications.Projects;
 
 namespace LLCStroyCom.Tests.Services;
 
@@ -98,7 +95,7 @@ public class PageTokenServiceTests
     public void Encode_NullToken_ThrowsArgumentNullException()
     {
         // Arrange
-        ProjectPageToken nullToken = null;
+        ProjectPageToken nullToken = null!;
 
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() => _service.Encode(nullToken));
@@ -108,7 +105,7 @@ public class PageTokenServiceTests
     public void Decode_NullEncodedToken_ThrowsArgumentNullException()
     {
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => _service.Decode<ProjectPageToken>(null));
+        Assert.Throws<ArgumentNullException>(() => _service.Decode<ProjectPageToken>(null!));
     }
 
     [Fact]

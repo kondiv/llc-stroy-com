@@ -16,13 +16,12 @@ public class AuthControllerTests
 {
     private readonly Mock<IAuthService> _authServiceMock;
     private readonly Mock<IRefreshTokenService> _refreshTokenServiceMock;
-    private readonly JwtSettings _jwtSettings;
     private readonly AuthController _authController;
     private readonly DefaultHttpContext _httpContext;
     
     public AuthControllerTests()
     {
-        _jwtSettings = new JwtSettings
+        var jwtSettings = new JwtSettings
         {
             Key = "super-secret-key-with-min-32-characters-length-123",
             Issuer = "test-issuer",
@@ -31,7 +30,7 @@ public class AuthControllerTests
             RefreshTokenExpirationDays = 7
         };
         var jwtSettingsMock = new Mock<IOptions<JwtSettings>>();
-        jwtSettingsMock.Setup(o => o.Value).Returns(_jwtSettings);
+        jwtSettingsMock.Setup(o => o.Value).Returns(jwtSettings);
         
         _authServiceMock = new Mock<IAuthService>();
         _refreshTokenServiceMock = new Mock<IRefreshTokenService>();
@@ -265,7 +264,7 @@ public class AuthControllerTests
         var result = await _authController.LoginAsync(request, CancellationToken.None);
 
         // Assert
-        var badRequest = Assert.IsType<BadRequestObjectResult>(result);
+        Assert.IsType<BadRequestObjectResult>(result);
     }
 
     [Fact]

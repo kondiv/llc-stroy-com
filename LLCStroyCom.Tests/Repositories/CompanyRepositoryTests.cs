@@ -17,7 +17,7 @@ public class CompanyRepositoryTests
         _companyRepository = new CompanyRepository(context);
     }
 
-    private StroyComDbContext GetInMemoryDbContext()
+    private static StroyComDbContext GetInMemoryDbContext()
     {
         var options = new DbContextOptionsBuilder<StroyComDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
@@ -91,7 +91,7 @@ public class CompanyRepositoryTests
         await companyRepository.CreateAsync(company);
         
         // Assert
-        Assert.Equal(1, context.Companies.Count());
+        Assert.Equal(1, await context.Companies.CountAsync());
     }
 
     [Fact]
@@ -155,7 +155,7 @@ public class CompanyRepositoryTests
         Company? company = null;
         
         // Act
-        var act = () => _companyRepository.CreateAsync(company);
+        var act = () => _companyRepository.CreateAsync(company!);
         
         // Assert
         await Assert.ThrowsAsync<ArgumentNullException>(act);

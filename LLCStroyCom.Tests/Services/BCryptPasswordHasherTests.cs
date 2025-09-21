@@ -19,7 +19,7 @@ public class BCryptPasswordHasherTests
         string? password = null;
         
         // Act
-        var act = () => _passwordHasher.HashPassword(password);
+        var act = () => _passwordHasher.HashPassword(password!);
         
         // Assert
         Assert.Throws<ArgumentNullException>(act);
@@ -87,7 +87,7 @@ public class BCryptPasswordHasherTests
         var passwordHash = "passwordHash";
         
         // Act
-        var result =  _passwordHasher.VerifyPassword(password, passwordHash);
+        var result =  _passwordHasher.VerifyPassword(password!, passwordHash);
         
         // Assert
         Assert.False(result);
@@ -129,7 +129,7 @@ public class BCryptPasswordHasherTests
         string? passwordHash = null;
         
         // Act
-        var result =  _passwordHasher.VerifyPassword(password, passwordHash);
+        var result =  _passwordHasher.VerifyPassword(password, passwordHash!);
         
         // Assert
         Assert.False(result);

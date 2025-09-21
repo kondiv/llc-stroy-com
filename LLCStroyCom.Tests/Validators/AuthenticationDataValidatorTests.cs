@@ -29,7 +29,7 @@ public class AuthenticationDataValidatorTests
         var password = "Password_1";
         
         // Act
-        var result = await _validator.ValidateAsync(new RegistrationDataValidationDto(email, password));
+        var result = await _validator.ValidateAsync(new RegistrationDataValidationDto(email!, password));
         
         // Assert
         Assert.False(result.IsValid);
@@ -130,7 +130,7 @@ public class AuthenticationDataValidatorTests
         string? password = null;
         
         // Act
-        var result = await _validator.ValidateAsync(new RegistrationDataValidationDto(email, password));
+        var result = await _validator.ValidateAsync(new RegistrationDataValidationDto(email, password!));
         
         // Assert
         Assert.False(result.IsValid);

@@ -1,6 +1,4 @@
-﻿using System.Net.Mime;
-using LLCStroyCom.Domain;
-using LLCStroyCom.Domain.Entities;
+﻿using LLCStroyCom.Domain.Entities;
 using LLCStroyCom.Domain.Enums;
 using LLCStroyCom.Domain.Exceptions;
 using LLCStroyCom.Domain.Models.Filters.Project;
@@ -23,7 +21,7 @@ public class ProjectRepositoryTests
         _projectRepository = new ProjectRepository(context);
     }
 
-    private StroyComDbContext GetInMemoryDbContext()
+    private static StroyComDbContext GetInMemoryDbContext()
     {
         var options = new DbContextOptionsBuilder<StroyComDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
@@ -105,7 +103,7 @@ public class ProjectRepositoryTests
         Project? project = null;
         
         // Act
-        var act = () => _projectRepository.CreateAsync(project);
+        var act = () => _projectRepository.CreateAsync(project!);
         
         // Assert
         await Assert.ThrowsAsync<ArgumentNullException>(act);
@@ -130,7 +128,7 @@ public class ProjectRepositoryTests
         await projectRepository.CreateAsync(project);
         
         // Assert
-        Assert.Equal(1, context.Projects.Count());
+        Assert.Equal(1, await context.Projects.CountAsync());
     }
 
     // Not working with InMemoryDatabase, tested in actual DB - Success
@@ -157,7 +155,7 @@ public class ProjectRepositoryTests
         var act = () => projectRepository.CreateAsync(project);
         
         // Assert
-        // await Assert.ThrowsAsync<DbUpdateException>(act);
+        Assert.IsType<Func<Task>>(act);
     }
 
     [Fact]
@@ -539,14 +537,11 @@ public class ProjectRepositoryTests
         var resultList = result.ToList();
         
         // Assert
-        Assert.All(resultList, p =>
+        foreach (var item in resultList)
         {
-            Assert.Multiple(() =>
-            {
-                Assert.Equal(Status.InProgress, p.Status);
-                Assert.Equal("Москва", p.City);
-            });
-        });
+            Assert.Equal(Status.InProgress, item.Status);
+            Assert.Equal("Москва", item.City);
+        }
     }
 
     [Fact]

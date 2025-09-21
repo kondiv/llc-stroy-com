@@ -20,7 +20,7 @@ public class RefreshTokenRepositoryTests
         _tokenRepository = new RefreshTokenRepository(context, _tokenHasher);
     }
     
-    private StroyComDbContext GetInMemoryDbContext()
+    private static StroyComDbContext GetInMemoryDbContext()
     {
         var options = new DbContextOptionsBuilder<StroyComDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
@@ -36,7 +36,7 @@ public class RefreshTokenRepositoryTests
         string? token = null;
         
         // Act
-        var act = () => _tokenRepository.GetAsync(token);
+        var act = () => _tokenRepository.GetAsync(token!);
         
         // Assert
         await Assert.ThrowsAsync<ArgumentNullException>(act);

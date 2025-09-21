@@ -134,8 +134,7 @@ public class ProjectServiceTests
         // Arrange
         var projectFilter = new ProjectFilter();
         var maxPageSize = 1;
-        var specification = new ProjectSpecification(projectFilter, null, maxPageSize);
-        
+
         _projectRepositoryMock
             .Setup(r => r.ListAsync(It.IsAny<ProjectSpecification>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Project>() { new Project() { Name = "Project1" }, new Project() { Name = "Project2" } });
@@ -166,8 +165,7 @@ public class ProjectServiceTests
             OrderBy = "name"
         };
         var maxPageSize = 1;
-        var specification = new ProjectSpecification(projectFilter, null, maxPageSize);
-        
+
         _projectRepositoryMock
             .Setup(r => r.ListAsync(It.IsAny<ProjectSpecification>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Project>() { new Project() { Name = "Project1" }, new Project() { Name = "Project2" } });

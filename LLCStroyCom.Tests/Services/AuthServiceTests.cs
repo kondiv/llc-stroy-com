@@ -1,6 +1,5 @@
 ﻿using LLCStroyCom.Application.Services;
 using LLCStroyCom.Application.Validators.Auth;
-using LLCStroyCom.Domain.Dto;
 using LLCStroyCom.Domain.Entities;
 using LLCStroyCom.Domain.Exceptions;
 using LLCStroyCom.Domain.Repositories;
@@ -14,8 +13,6 @@ public class AuthServiceTests
 {
     private readonly Mock<IUserRepository> _userRepositoryMock;
     private readonly Mock<IRoleRepository> _roleRepositoryMock;
-    private readonly Mock<IPasswordHasher> _passwordHasherMock;
-    private readonly Mock<ITokenService> _tokenServiceMock;
 
     private readonly IAuthService _authService;
 
@@ -23,16 +20,16 @@ public class AuthServiceTests
     {
         _userRepositoryMock = new Mock<IUserRepository>();
         _roleRepositoryMock = new Mock<IRoleRepository>();
-        _passwordHasherMock = new Mock<IPasswordHasher>();
-        _tokenServiceMock = new Mock<ITokenService>();
+        var passwordHasherMock = new Mock<IPasswordHasher>();
+        var tokenServiceMock = new Mock<ITokenService>();
         var authenticationDataValidator = new AuthenticationDataValidator();
         var loggerMock = new Mock<ILogger<AuthService>>();
 
         _authService = new AuthService(
-            _tokenServiceMock.Object,
+            tokenServiceMock.Object,
             _userRepositoryMock.Object,
             _roleRepositoryMock.Object,
-            _passwordHasherMock.Object,
+            passwordHasherMock.Object,
             authenticationDataValidator,
             loggerMock.Object);
     }
@@ -69,7 +66,6 @@ public class AuthServiceTests
         var invalidEmail = "invalidEmail";
         var password = "Strong_Passw0rd";
         var roleName = "Engineer";
-        var userId = Guid.NewGuid();
 
         // Act
         var result = await _authService.RegisterAsync(invalidEmail, password, roleName);
@@ -86,7 +82,6 @@ public class AuthServiceTests
         var email = "email@email.ru";
         var invalidPassword = "invalidPassword";
         var roleName = "Engineer";
-        var userId = Guid.NewGuid();
 
         // Act
         var result = await _authService.RegisterAsync(email, invalidPassword, roleName);
@@ -106,7 +101,7 @@ public class AuthServiceTests
 
         _roleRepositoryMock
             .Setup(r => r.GetByNameAsync(roleName, It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new ArgumentException());
+            .ThrowsAsync(new ArgumentException(roleName));
 
         // Act
         var result = await _authService.RegisterAsync(email, password, roleName);
@@ -125,11 +120,11 @@ public class AuthServiceTests
         string? roleName = null;
 
         _roleRepositoryMock
-            .Setup(r => r.GetByNameAsync(roleName, It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new ArgumentNullException());
+            .Setup(r => r.GetByNameAsync(roleName!, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ArgumentNullException(roleName));
 
         // Act
-        var result = await _authService.RegisterAsync(email, password, roleName);
+        var result = await _authService.RegisterAsync(email, password, roleName!);
 
         // Assert
         Assert.False(result.Succeeded);

@@ -8,7 +8,7 @@ namespace LLCStroyCom.Tests.Seeders;
 
 public class RoleSeederTests
 {
-    private StroyComDbContext GetInMemoryDbContext()
+    private static StroyComDbContext GetInMemoryDbContext()
     {
         var options = new DbContextOptionsBuilder<StroyComDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
@@ -28,7 +28,7 @@ public class RoleSeederTests
         await seeder.SeedAsync();
         
         // Assert
-        Assert.Equal(3, context.Roles.Count());
+        Assert.Equal(3, await context.Roles.CountAsync());
     }
     
     [Fact]
@@ -44,14 +44,14 @@ public class RoleSeederTests
         await context.Roles.AddRangeAsync(engineer, manager);
         await context.SaveChangesAsync();
 
-        var rolesInDb = context.Roles.Count();
+        var rolesInDb = await context.Roles.CountAsync();
         
         // Act
         await seeder.SeedAsync();
         
         // Assert
-        Assert.NotEqual(rolesInDb, context.Roles.Count());
-        Assert.Equal(3, context.Roles.Count());
+        Assert.NotEqual(rolesInDb, await context.Roles.CountAsync());
+        Assert.Equal(3, await context.Roles.CountAsync());
     }
 
     [Fact]
@@ -68,12 +68,12 @@ public class RoleSeederTests
         await context.Roles.AddRangeAsync(engineer, manager, observer);
         await context.SaveChangesAsync();
 
-        var rolesInDb = context.Roles.Count();
+        var rolesInDb = await context.Roles.CountAsync();
         
         // Act
         await seeder.SeedAsync();
         
         // Assert
-        Assert.Equal(rolesInDb, context.Roles.Count());
+        Assert.Equal(rolesInDb, await context.Roles.CountAsync());
     }
 }

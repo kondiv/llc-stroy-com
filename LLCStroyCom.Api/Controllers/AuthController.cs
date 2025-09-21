@@ -138,7 +138,7 @@ public class AuthController : ControllerBase
 
     private void SetTokensInsideCookie(HttpContext httpContext, PlainJwtTokensDto tokens)
     {
-        HttpContext.Response.Cookies.Append("access_token", tokens.AccessToken,
+        httpContext.Response.Cookies.Append("access_token", tokens.AccessToken,
             new CookieOptions
             {
                 Expires = DateTimeOffset.UtcNow.AddMinutes(_jwtSettings.AccessTokenExpirationMinutes),
@@ -148,7 +148,7 @@ public class AuthController : ControllerBase
                 SameSite = SameSiteMode.None
             });
         
-        HttpContext.Response.Cookies.Append("refresh_token", tokens.RefreshToken,
+        httpContext.Response.Cookies.Append("refresh_token", tokens.RefreshToken,
             new CookieOptions
             {
                 Expires = DateTimeOffset.UtcNow.AddDays(_jwtSettings.RefreshTokenExpirationDays),

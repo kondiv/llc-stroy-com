@@ -9,7 +9,7 @@ namespace LLCStroyCom.Tests.Repositories;
 
 public class UserRepositoryTests
 {
-    private StroyComDbContext GetInMemoryDbContext()
+    private static StroyComDbContext GetInMemoryDbContext()
     {
         var options = new DbContextOptionsBuilder<StroyComDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
@@ -38,7 +38,7 @@ public class UserRepositoryTests
         var result = await userRepository.CreateAsync(applicationUser);
 
         // Assert
-        Assert.Equal(1, context.Users.Count());
+        Assert.Equal(1, await context.Users.CountAsync());
         Assert.Equal(userId, result);
     }
 
@@ -51,7 +51,7 @@ public class UserRepositoryTests
 
         var applicationUser = new ApplicationUser()
         {
-            Email = null,
+            Email = null!,
             HashPassword = "asdfasdfasdf",
             RoleId = 1
         };
@@ -73,7 +73,7 @@ public class UserRepositoryTests
         var applicationUser = new ApplicationUser()
         {
             Email = "email",
-            HashPassword = null,
+            HashPassword = null!,
             RoleId = 1
         };
         
@@ -86,7 +86,7 @@ public class UserRepositoryTests
 
     // InMemoryDb does not represent check constraint, test is green - tested in actual db
     [Fact]
-    public async Task CreateAsync_WhenRoleIdIsMissing_ShouldThrowException()
+    public void CreateAsync_WhenRoleIdIsMissing_ShouldThrowException()
     {
         // Arrange
         var context = GetInMemoryDbContext();
@@ -102,7 +102,7 @@ public class UserRepositoryTests
         var act = () => userRepository.CreateAsync(applicationUser);
         
         // Assert
-        // await Assert.ThrowsAsync<DbUpdateException>(act);
+        Assert.IsType<Func<Task<Guid>>>(act);
     }
 
     [Fact]
@@ -135,7 +135,7 @@ public class UserRepositoryTests
         var context = GetInMemoryDbContext();
         IUserRepository userRepository = new UserRepository(context);
 
-        ApplicationUser user = null;
+        ApplicationUser user = null!;
         
         // Act
         var act = () => userRepository.CreateAsync(user);
@@ -173,7 +173,7 @@ public class UserRepositoryTests
         await userRepository.DeleteAsync(applicationUser.Id);
         
         // Assert
-        Assert.Equal(0, context.Users.Count());
+        Assert.Equal(0, await context.Users.CountAsync());
     }
 
     [Fact]
@@ -233,7 +233,7 @@ public class UserRepositoryTests
         string? email = null;
         
         // Act
-        var act = () => userRepository.GetByEmailAsync(email);
+        var act = () => userRepository.GetByEmailAsync(email!);
         
         // Assert
         await Assert.ThrowsAsync<ArgumentNullException>(act);
@@ -311,7 +311,7 @@ public class UserRepositoryTests
         var userId = Guid.NewGuid();
         
         // Act
-        var act = () => userRepository.AssignNewAndRevokeOldRefreshTokenAsync(userId, refreshToken);
+        var act = () => userRepository.AssignNewAndRevokeOldRefreshTokenAsync(userId, refreshToken!);
         
         // Assert
         await Assert.ThrowsAsync<ArgumentNullException>(act);

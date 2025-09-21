@@ -19,7 +19,7 @@ public class HmacTokenHasherTests
         string? token = null;
         
         // Act
-        var act = () =>  _tokenHasher.HashToken(token);
+        var act = () =>  _tokenHasher.HashToken(token!);
         
         // Assert
         Assert.Throws<ArgumentNullException>(act);
@@ -32,7 +32,7 @@ public class HmacTokenHasherTests
         var token = string.Empty;
         
         // Act
-        var act = () =>  _tokenHasher.HashToken(token);
+        Func<string> act = () =>  _tokenHasher.HashToken(token);
         
         // Assert
         Assert.Throws<ArgumentException>(act);

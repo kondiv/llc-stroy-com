@@ -8,11 +8,15 @@ public class ApplicationUser
     
     public string HashPassword { get; set; } = null!;
     
+    public Guid CompanyId { get; set; }
+
+    public virtual Company Company { get; set; } = null!;
+    
     public int RoleId { get; set; }
-    
-    public virtual ICollection<Defect> Defects { get; set; } = [];
-    
+
     public virtual ApplicationRole Role { get; set; } = null!;
+
+    public virtual ICollection<Defect> Defects { get; set; } = [];
     
     public ICollection<RefreshToken> RefreshTokens { get; set; } = [];
 }

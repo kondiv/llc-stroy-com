@@ -3,6 +3,7 @@ using System;
 using LLCStroyCom.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace LLCStroyCom.Infrastructure.Migrations
 {
     [DbContext(typeof(StroyComDbContext))]
-    partial class StroyComDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250921182700_Defects")]
+    partial class Defects
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -51,9 +54,6 @@ namespace LLCStroyCom.Infrastructure.Migrations
                         .HasColumnName("id")
                         .HasDefaultValueSql("uuid_generate_v4()");
 
-                    b.Property<Guid>("CompanyId")
-                        .HasColumnType("uuid");
-
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(255)
@@ -72,8 +72,6 @@ namespace LLCStroyCom.Infrastructure.Migrations
                         .HasAnnotation("CheckConstraint", "Ck_ApplicatinoUser_RoleId_Positive");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("CompanyId");
 
                     b.HasIndex("Email")
                         .IsUnique();
@@ -235,19 +233,11 @@ namespace LLCStroyCom.Infrastructure.Migrations
 
             modelBuilder.Entity("LLCStroyCom.Domain.Entities.ApplicationUser", b =>
                 {
-                    b.HasOne("LLCStroyCom.Domain.Entities.Company", "Company")
-                        .WithMany("Employees")
-                        .HasForeignKey("CompanyId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("LLCStroyCom.Domain.Entities.ApplicationRole", "Role")
                         .WithMany("Users")
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Company");
 
                     b.Navigation("Role");
                 });
@@ -305,8 +295,6 @@ namespace LLCStroyCom.Infrastructure.Migrations
 
             modelBuilder.Entity("LLCStroyCom.Domain.Entities.Company", b =>
                 {
-                    b.Navigation("Employees");
-
                     b.Navigation("Projects");
                 });
 

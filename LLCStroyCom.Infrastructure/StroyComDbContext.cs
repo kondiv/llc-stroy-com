@@ -56,6 +56,10 @@ public class StroyComDbContext : DbContext
             entity.HasOne(u => u.Role)
                 .WithMany(r => r.Users)
                 .HasForeignKey(u => u.RoleId);
+            
+            entity.HasOne(u => u.Company)
+                .WithMany(c => c.Employees)
+                .HasForeignKey(u => u.CompanyId);
 
             entity.ToTable(t =>
                 t.HasCheckConstraint(

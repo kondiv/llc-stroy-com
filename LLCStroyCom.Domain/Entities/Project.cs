@@ -17,4 +17,6 @@ public class Project
     public Guid CompanyId { get; set; }
     
     public virtual Company Company { get; set; } = null!;
+    
+    public virtual ICollection<Defect> Defects { get; set; } = [];
 }

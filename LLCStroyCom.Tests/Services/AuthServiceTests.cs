@@ -38,6 +38,7 @@ public class AuthServiceTests
     public async Task RegisterAsync_WhenDataIsValid_ShouldReturnResultSuccess()
     {
         // Arrange
+        var name = "Кондрашин Илья Валереьвич";
         var email = "email@email.com";
         var password = "Strong_Passw0rd";
         var roleName = "Engineer";
@@ -52,7 +53,7 @@ public class AuthServiceTests
             .ReturnsAsync(userId);
 
         // Act
-        var result = await _authService.RegisterAsync(email, password, roleName);
+        var result = await _authService.RegisterAsync(name, email, password, roleName);
 
         // Assert
         Assert.True(result.Succeeded);
@@ -63,12 +64,13 @@ public class AuthServiceTests
     public async Task RegisterAsync_WhenEmailIsInvalid_ShouldReturnResultFailure()
     {
         // Arrange
+        var name = "Кондрашин Илья Валереьвич";
         var invalidEmail = "invalidEmail";
         var password = "Strong_Passw0rd";
         var roleName = "Engineer";
 
         // Act
-        var result = await _authService.RegisterAsync(invalidEmail, password, roleName);
+        var result = await _authService.RegisterAsync(name, invalidEmail, password, roleName);
 
         // Assert
         Assert.False(result.Succeeded);
@@ -79,12 +81,13 @@ public class AuthServiceTests
     public async Task RegisterAsync_WhenPasswordIsInvalid_ShouldReturnResultFailure()
     {
         // Arrange
+        var name = "Кондрашин Илья Валереьвич";
         var email = "email@email.ru";
         var invalidPassword = "invalidPassword";
         var roleName = "Engineer";
 
         // Act
-        var result = await _authService.RegisterAsync(email, invalidPassword, roleName);
+        var result = await _authService.RegisterAsync(name, email, invalidPassword, roleName);
 
         // Assert
         Assert.False(result.Succeeded);
@@ -95,6 +98,7 @@ public class AuthServiceTests
     public async Task RegisterAsync_WhenRoleNameIsEmpty_ShouldReturnResultFailure()
     {
         // Arrange
+        var name = "Кондрашин Илья Валереьвич";
         var email = "email@email.ru";
         var password = "Strong_Passw0rd";
         var roleName = string.Empty;
@@ -104,7 +108,7 @@ public class AuthServiceTests
             .ThrowsAsync(new ArgumentException(roleName));
 
         // Act
-        var result = await _authService.RegisterAsync(email, password, roleName);
+        var result = await _authService.RegisterAsync(name, email, password, roleName);
 
         // Assert
         Assert.False(result.Succeeded);
@@ -115,6 +119,7 @@ public class AuthServiceTests
     public async Task RegisterAsync_WhenRoleNameIsNull_ShouldReturnResultFailure()
     {
         // Arrange
+        var name = "Кондрашин Илья Валереьвич";
         var email = "email@email.ru";
         var password = "Strong_Passw0rd";
         string? roleName = null;
@@ -124,7 +129,7 @@ public class AuthServiceTests
             .ThrowsAsync(new ArgumentNullException(roleName));
 
         // Act
-        var result = await _authService.RegisterAsync(email, password, roleName!);
+        var result = await _authService.RegisterAsync(name, email, password, roleName!);
 
         // Assert
         Assert.False(result.Succeeded);
@@ -135,6 +140,7 @@ public class AuthServiceTests
     public async Task RegisterAsync_WhenRoleDoesNotExist_ShouldReturnResultFailure()
     {
         // Arrange
+        var name = "Кондрашин Илья Валереьвич";
         var email = "email@email.com";
         var password = "Strong_Passw0rd";
         var roleName = "randomRole";
@@ -144,7 +150,7 @@ public class AuthServiceTests
             .ThrowsAsync(CouldNotFindRole.WithName(roleName));
 
         // Act
-        var result = await _authService.RegisterAsync(email, password, roleName);
+        var result = await _authService.RegisterAsync(name,email, password, roleName);
 
         // Assert
         Assert.False(result.Succeeded);
@@ -155,6 +161,7 @@ public class AuthServiceTests
     public async Task RegisterAsync_WhenUserIsNull_ShouldReturnResultFailure()
     {
         // Arrange
+        var name = "Кондрашин Илья Валерьевич";
         var email = "email@email.ru";
         var password = "Strong_Passw0rd";
         var roleName = "Engineer";
@@ -168,7 +175,7 @@ public class AuthServiceTests
             .ThrowsAsync(new ArgumentNullException());
 
         // Act
-        var result = await _authService.RegisterAsync(email, password, roleName);
+        var result = await _authService.RegisterAsync(name, email, password, roleName);
 
         // Assert
         Assert.False(result.Succeeded);
@@ -179,6 +186,7 @@ public class AuthServiceTests
     public async Task RegisterAsync_WhenOperationCanceled_ShouldReturnResultFailure()
     {
         // Arrange
+        var name = "Кондрашин Илья Валереьвич";
         var email = "email@email.ru";
         var password = "Strong_Passw0rd";
         var roleName = "Engineer";
@@ -189,7 +197,7 @@ public class AuthServiceTests
             .ThrowsAsync(new OperationCanceledException());
 
         // Act
-        var act = () => _authService.RegisterAsync(email, password, roleName, cancellationToken);
+        var act = () => _authService.RegisterAsync(name, email, password, roleName, cancellationToken);
 
         // Assert
         await Assert.ThrowsAsync<OperationCanceledException>(act);

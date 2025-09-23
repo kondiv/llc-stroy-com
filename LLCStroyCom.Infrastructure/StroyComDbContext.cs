@@ -1,4 +1,5 @@
 ﻿using LLCStroyCom.Domain.Entities;
+using LLCStroyCom.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace LLCStroyCom.Infrastructure;
@@ -16,6 +17,7 @@ public class StroyComDbContext : DbContext
     public DbSet<RefreshToken> RefreshTokens { get; set; }
     public DbSet<Project> Projects { get; set; }
     public DbSet<Company> Companies { get; set; }
+    public DbSet<Defect> Defects { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -36,6 +38,11 @@ public class StroyComDbContext : DbContext
                 .ValueGeneratedOnAdd()
                 .HasColumnName("id");
             
+            entity.Property(e => e.Name)
+                .IsRequired()
+                .HasMaxLength(255)
+                .HasColumnName("name");
+            
             entity.Property(e => e.Email)
                 .IsRequired()
                 .HasMaxLength(255)
@@ -54,6 +61,13 @@ public class StroyComDbContext : DbContext
             entity.HasOne(u => u.Role)
                 .WithMany(r => r.Users)
                 .HasForeignKey(u => u.RoleId);
+            
+            entity.Property(e => e.CompanyId)
+                .HasColumnName("company_id");
+            
+            entity.HasOne(u => u.Company)
+                .WithMany(c => c.Employees)
+                .HasForeignKey(u => u.CompanyId);
 
             entity.ToTable(t =>
                 t.HasCheckConstraint(
@@ -173,6 +187,48 @@ public class StroyComDbContext : DbContext
                 .IsRequired()
                 .HasMaxLength(127)
                 .HasColumnName("name");
+        });
+
+        modelBuilder.Entity<Defect>(entity =>
+        {
+            entity.ToTable("defect");
+
+            entity.HasKey(e => e.Id);
+            
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("uuid_generate_v4()")
+                .ValueGeneratedOnAdd()
+                .HasColumnName("id");
+            
+            entity.Property(e => e.Name)
+                .IsRequired()
+                .HasMaxLength(128)
+                .HasColumnName("name");
+            
+            entity.Property(e => e.Description)
+                .IsRequired()
+                .HasMaxLength(512)
+                .HasColumnName("description");
+            
+            entity.Property(e => e.Status)
+                .IsRequired()
+                .HasDefaultValue(Status.New)
+                .HasColumnName("status");
+            
+            entity.Property(e => e.ProjectId)
+                .IsRequired()
+                .HasColumnName("project_id");
+            
+            entity.Property(e => e.ChiefEngineerId)
+                .HasColumnName("chief_engineer_id");
+
+            entity.HasOne(d => d.ChiefEngineer)
+                .WithMany(e => e.Defects)
+                .HasForeignKey(d => d.ChiefEngineerId);
+            
+            entity.HasOne(d => d.Project)
+                .WithMany(p => p.Defects)
+                .HasForeignKey(d => d.ProjectId);
         });
     }
 }

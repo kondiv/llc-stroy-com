@@ -1,4 +1,6 @@
-﻿using LLCStroyCom.Application.Services;
+﻿using AutoMapper;
+using LLCStroyCom.Application.MapperProfiles;
+using LLCStroyCom.Application.Services;
 using LLCStroyCom.Domain.Dto;
 using LLCStroyCom.Domain.Entities;
 using LLCStroyCom.Domain.Enums;
@@ -8,6 +10,7 @@ using LLCStroyCom.Domain.Models.PageTokens;
 using LLCStroyCom.Domain.Repositories;
 using LLCStroyCom.Domain.Services;
 using LLCStroyCom.Domain.Specifications.Projects;
+using Microsoft.Extensions.Logging;
 using Moq;
 
 namespace LLCStroyCom.Tests.Services;
@@ -22,7 +25,14 @@ public class ProjectServiceTests
     {
         _pageTokenServiceMock = new Mock<IPageTokenService>();
         _projectRepositoryMock = new Mock<IProjectRepository>();
-        _projectService = new ProjectService(_pageTokenServiceMock.Object, _projectRepositoryMock.Object);
+        var loggerFactory = new LoggerFactory();
+        var mapperConfig = new MapperConfiguration(cfg =>
+        {
+            cfg.AddProfile<UserProfile>();
+            cfg.AddProfile<ProjectProfile>();
+            cfg.AddProfile<CompanyProfile>();
+        }, loggerFactory);
+        _projectService = new ProjectService(_pageTokenServiceMock.Object, _projectRepositoryMock.Object, mapperConfig.CreateMapper());
     }
 
     [Fact]

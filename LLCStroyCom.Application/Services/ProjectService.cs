@@ -1,4 +1,5 @@
-﻿using LLCStroyCom.Domain.Dto;
+﻿using AutoMapper;
+using LLCStroyCom.Domain.Dto;
 using LLCStroyCom.Domain.Models.Filters.Project;
 using LLCStroyCom.Domain.Models.PageTokens;
 using LLCStroyCom.Domain.Repositories;
@@ -11,11 +12,16 @@ public class ProjectService : IProjectService
 {
     private readonly IPageTokenService _pageTokenService;
     private readonly IProjectRepository _projectRepository;
+    private readonly IMapper _mapper;
 
-    public ProjectService(IPageTokenService pageTokenService, IProjectRepository projectRepository)
+    public ProjectService(
+        IPageTokenService pageTokenService,
+        IProjectRepository projectRepository,
+        IMapper mapper)
     {
         _pageTokenService = pageTokenService;
         _projectRepository = projectRepository;
+        _mapper = mapper;
     }
     
     public async Task<PaginatedProjectListResponse> ListAsync(string? plainPageToken, ProjectFilter filter, int maxPageSize, 
@@ -53,7 +59,7 @@ public class ProjectService : IProjectService
         {
             return new PaginatedProjectListResponse()
             {
-                Projects = projectsList.Select(p => new ProjectDto(p.Name, p.City, p.CompanyId, p.Status, p.CreatedAt))
+                Projects = projectsList.Select(p => _mapper.Map<ProjectDto>(p))
                     .ToList(),
                 PageToken = null
             };
@@ -74,7 +80,7 @@ public class ProjectService : IProjectService
 
         return new PaginatedProjectListResponse()
         {
-            Projects = projectsList.Select(p => new ProjectDto(p.Name, p.City, p.CompanyId, p.Status, p.CreatedAt))
+            Projects = projectsList.Select(p => _mapper.Map<ProjectDto>(p))
                 .ToList(),
             PageToken = encodedToken
         };
@@ -84,6 +90,6 @@ public class ProjectService : IProjectService
     {
         var project = await _projectRepository.GetAsync(id, cancellationToken);
         
-        return new ProjectDto(project.Name, project.City, project.CompanyId, project.Status, project.CreatedAt);
+        return _mapper.Map<ProjectDto>(project);
     }
 }

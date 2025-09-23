@@ -1,8 +1,8 @@
 using System.Text;
+using LLCStroyCom.Application.MapperProfiles;
 using LLCStroyCom.Application.Services;
 using LLCStroyCom.Application.Validators.Auth;
 using LLCStroyCom.Domain.Configs;
-using LLCStroyCom.Domain.Models.PageTokens;
 using LLCStroyCom.Domain.Repositories;
 using LLCStroyCom.Domain.Services;
 using LLCStroyCom.Infrastructure;
@@ -23,6 +23,15 @@ builder.Configuration
 builder.Services.AddDbContext<StroyComDbContext>(options => 
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
+
+builder.Services.AddAutoMapper(cfg => { },
+    typeof(CompanyProfile),
+    typeof(DefectProfile),
+    typeof(ProjectProfile),
+    typeof(UserProfile),
+    typeof(ChiefEngineerProfile));
+
 #region Seeders
 
 builder.Services.AddScoped<RoleSeeder>();
@@ -35,6 +44,7 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
+builder.Services.AddScoped<IDefectRepository, DefectRepository>();
 
 #endregion
 
@@ -49,6 +59,7 @@ builder.Services.AddSingleton<ITokenHasher>(new HmacTokenHasher(hmacSecret));
 builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
 builder.Services.AddScoped<IPageTokenService, PageTokenService>();
 builder.Services.AddScoped<IProjectService, ProjectService>();
+builder.Services.AddScoped<IDefectService, DefectService>();
 
 #endregion
 
@@ -57,8 +68,6 @@ builder.Services.AddScoped<IProjectService, ProjectService>();
 builder.Services.AddSingleton<AuthenticationDataValidator>();
 
 #endregion
-
-builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
 
 builder.Services.AddAuthentication(options =>
     {

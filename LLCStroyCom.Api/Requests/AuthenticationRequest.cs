@@ -4,6 +4,11 @@ namespace LLCStroyCom.Api.Requests;
 
 public sealed class AuthenticationRequest
 {
+    [Required(ErrorMessage = "Full name is required")]
+    [MinLength(8, ErrorMessage = "Full name must be at least 8 characters")]
+    [MaxLength(255, ErrorMessage = "Full name must not exceed 255 characters")]
+    public string Name { get; set; } = null!;
+    
     [Required(ErrorMessage = "Email is required")]
     [EmailAddress(ErrorMessage = "Invalid Email Address")]
     [MinLength(6, ErrorMessage = "Email must be at least 6 characters long")]

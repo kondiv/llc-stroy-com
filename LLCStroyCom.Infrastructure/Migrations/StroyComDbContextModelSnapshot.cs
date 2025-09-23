@@ -51,8 +51,9 @@ namespace LLCStroyCom.Infrastructure.Migrations
                         .HasColumnName("id")
                         .HasDefaultValueSql("uuid_generate_v4()");
 
-                    b.Property<Guid>("CompanyId")
-                        .HasColumnType("uuid");
+                    b.Property<Guid?>("CompanyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("company_id");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -65,6 +66,12 @@ namespace LLCStroyCom.Infrastructure.Migrations
                         .HasMaxLength(512)
                         .HasColumnType("character varying(512)")
                         .HasColumnName("hash_password");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("name");
 
                     b.Property<int>("RoleId")
                         .HasColumnType("integer")
@@ -237,9 +244,7 @@ namespace LLCStroyCom.Infrastructure.Migrations
                 {
                     b.HasOne("LLCStroyCom.Domain.Entities.Company", "Company")
                         .WithMany("Employees")
-                        .HasForeignKey("CompanyId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("CompanyId");
 
                     b.HasOne("LLCStroyCom.Domain.Entities.ApplicationRole", "Role")
                         .WithMany("Users")

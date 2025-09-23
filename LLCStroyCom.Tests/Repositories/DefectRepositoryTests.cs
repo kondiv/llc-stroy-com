@@ -52,6 +52,18 @@ public class DefectRepositoryTests
             Description = "Трещина",
             ProjectId = Guid.NewGuid(),
         };
+        var project = new Project()
+        {
+            Id = defect.ProjectId,
+            City = "Moscow",
+            CompanyId = Guid.NewGuid(),
+            CreatedAt = DateTimeOffset.UtcNow,
+            Name = "Project",
+            Status = Status.InProgress,
+            Defects = new List<Defect>() { defect }
+        };
+        
+        await context.Projects.AddAsync(project);
 
         await context.Defects.AddAsync(defect);
         await context.SaveChangesAsync();
@@ -185,8 +197,19 @@ public class DefectRepositoryTests
             Description = "Трещина",
             ProjectId = Guid.NewGuid(),
         };
+        var project = new Project()
+        {
+            Id = defect.ProjectId,
+            City = "Moscow",
+            CompanyId = Guid.NewGuid(),
+            CreatedAt = DateTimeOffset.UtcNow,
+            Name = "Project",
+            Status = Status.InProgress,
+            Defects = new List<Defect>() { defect }
+        };
         
         var context = GetInMemoryContext();
+        await context.Projects.AddAsync(project);
         await context.Defects.AddAsync(defect);
         await context.SaveChangesAsync();
         
@@ -238,7 +261,18 @@ public class DefectRepositoryTests
             Description = "Трещина",
             ProjectId = Guid.NewGuid(),
         };
+        var project = new Project()
+        {
+            Id = defect.ProjectId,
+            City = "Moscow",
+            CompanyId = Guid.NewGuid(),
+            CreatedAt = DateTimeOffset.UtcNow,
+            Name = "Project",
+            Status = Status.InProgress,
+            Defects = new List<Defect>() { defect }
+        };
         
+        await context.Projects.AddAsync(project);
         await context.Defects.AddAsync(defect);
         await context.SaveChangesAsync();
         
@@ -264,7 +298,18 @@ public class DefectRepositoryTests
             Description = "Трещина",
             ProjectId = Guid.NewGuid(),
         };
+        var project = new Project()
+        {
+            Id = defect.ProjectId,
+            City = "Moscow",
+            CompanyId = Guid.NewGuid(),
+            CreatedAt = DateTimeOffset.UtcNow,
+            Name = "Project",
+            Status = Status.InProgress,
+            Defects = new List<Defect>() { defect }
+        };
         
+        await context.Projects.AddAsync(project);
         await context.Defects.AddAsync(defect);
         await context.SaveChangesAsync();
         
@@ -277,6 +322,6 @@ public class DefectRepositoryTests
         
         // Assert
         Assert.Equal(1, await context.Defects.CountAsync());
-        await Assert.ThrowsAsync<TaskCanceledException>(act);
+        await Assert.ThrowsAsync<OperationCanceledException>(act);
     }
 }

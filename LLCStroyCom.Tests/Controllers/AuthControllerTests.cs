@@ -51,12 +51,13 @@ public class AuthControllerTests
         // Arrange
         var authenticationRequest = new AuthenticationRequest()
         {
+            Name = "Кондрашин Илья Валерьевич",
             Email = "email@email.ru",
             Password = "password"
         };
 
         _authServiceMock
-            .Setup(s => s.RegisterAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+            .Setup(s => s.RegisterAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
                 CancellationToken.None))
             .ReturnsAsync(Result.Success);
         
@@ -75,12 +76,13 @@ public class AuthControllerTests
         // Arrange
         var authenticationRequest = new AuthenticationRequest()
         {
+            Name = "Кондрашин Илья Валерьевич",
             Email = "email@email.ru",
             Password = "password"
         };
 
         _authServiceMock
-            .Setup(s => s.RegisterAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+            .Setup(s => s.RegisterAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
                 CancellationToken.None))
             .ReturnsAsync(Result.Failure());
         
@@ -97,6 +99,7 @@ public class AuthControllerTests
         // Arrange
         var authenticationRequest = new AuthenticationRequest()
         {
+            Name = "Кондрашин Илья Валерьевич",
             Email = "email@email.ru",
             Password = "pass"
         };
@@ -115,6 +118,7 @@ public class AuthControllerTests
         // Arrange
         var authenticationRequest = new AuthenticationRequest()
         {
+            Name = "Кондрашин Илья Валерьевич",
             Email = "email",
             Password = "Password_1234"
         };
@@ -133,12 +137,13 @@ public class AuthControllerTests
         // Arrange
         var authenticationRequest = new AuthenticationRequest()
         {
+            Name = "Кондрашин Илья Валерьевич",
             Email = "manager@email.com",
             Password = "Password_1234"
         };
         
         _authServiceMock
-            .Setup(s => s.RegisterAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+            .Setup(s => s.RegisterAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
                 CancellationToken.None))
             .ReturnsAsync(Result.Success);
         
@@ -155,12 +160,13 @@ public class AuthControllerTests
         // Arrange
         var authenticationRequest = new AuthenticationRequest()
         {
+            Name = "Кондрашин Илья Валерьевич",
             Email = "manager@email.ru",
             Password = "Password_1234"
         };
         
         _authServiceMock
-            .Setup(s => s.RegisterAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+            .Setup(s => s.RegisterAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
                 CancellationToken.None))
             .ReturnsAsync(Result.Failure());
         
@@ -177,12 +183,13 @@ public class AuthControllerTests
         // Arrange
         var authenticationRequest = new AuthenticationRequest()
         {
+            Name = "Кондрашин Илья Валерьевич",
             Email = "observer@email.com",
             Password = "Password_1234"
         };
         
         _authServiceMock
-            .Setup(s => s.RegisterAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+            .Setup(s => s.RegisterAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
                 CancellationToken.None))
             .ReturnsAsync(Result.Success);
         
@@ -199,12 +206,13 @@ public class AuthControllerTests
         // Arrange
         var authenticationRequest = new AuthenticationRequest()
         {
+            Name = "Кондрашин Илья Валерьевич",
             Email = "observer@email.ru",
             Password = "Password_1234"
         };
         
         _authServiceMock
-            .Setup(s => s.RegisterAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+            .Setup(s => s.RegisterAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
                 CancellationToken.None))
             .ReturnsAsync(Result.Failure());
         
@@ -219,7 +227,7 @@ public class AuthControllerTests
     public async Task LoginAsync_WhenModelStateIsInvalid_ShouldReturnBadRequest()
     {
         // Arrange
-        var request = new AuthenticationRequest();
+        var request = new LoginRequest();
         _authController.ModelState.AddModelError("Email", "Required");
 
         // Act
@@ -233,7 +241,7 @@ public class AuthControllerTests
     public async Task LoginAsync_WhenLoginFails_ShouldReturnBadRequest()
     {
         // Arrange
-        var request = new AuthenticationRequest { Email = "test@email.com", Password = "123456" };
+        var request = new LoginRequest() { Email = "test@email.com", Password = "123456" };
 
         var failedResult = Result<PlainJwtTokensDto>.Failure();
 
@@ -252,7 +260,7 @@ public class AuthControllerTests
     public async Task LoginAsync_WhenValueIsNull_ShouldReturnBadRequest()
     {
         // Arrange
-        var request = new AuthenticationRequest { Email = "test@email.com", Password = "123456" };
+        var request = new LoginRequest() { Email = "test@email.com", Password = "123456" };
 
         var resultWithoutValue = Result<PlainJwtTokensDto>.Success(null);
 
@@ -271,7 +279,7 @@ public class AuthControllerTests
     public async Task LoginAsync_WhenLoginSucceeds_ShouldReturnOk()
     {
         // Arrange
-        var request = new AuthenticationRequest { Email = "test@email.com", Password = "123456" };
+        var request = new LoginRequest() { Email = "test@email.com", Password = "123456" };
 
         var tokens = new PlainJwtTokensDto("access_token_value", "refresh_token_value");
 

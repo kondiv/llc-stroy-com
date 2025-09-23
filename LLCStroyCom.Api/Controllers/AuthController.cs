@@ -36,8 +36,8 @@ public class AuthController : ControllerBase
             return BadRequest(ModelState);
         }
 
-        var authenticationResult = await _authService.RegisterAsync (
-            request.Email, request.Password, RoleType.Engineer, cancellationToken);
+        var authenticationResult = await _authService.RegisterAsync(
+            request.Name, request.Email, request.Password, RoleType.Engineer, cancellationToken);
 
         if (!authenticationResult.Succeeded)
         {
@@ -57,7 +57,7 @@ public class AuthController : ControllerBase
         }
         
         var authenticationResult = await _authService.RegisterAsync(
-            request.Email, request.Password, RoleType.Manager, cancellationToken);
+            request.Name, request.Email, request.Password, RoleType.Manager, cancellationToken);
         
         if (!authenticationResult.Succeeded)
         {
@@ -77,7 +77,7 @@ public class AuthController : ControllerBase
         }
         
         var authenticationResult = await _authService.RegisterAsync(
-            request.Email, request.Password, RoleType.Observer, cancellationToken);
+            request.Name, request.Email, request.Password, RoleType.Observer, cancellationToken);
         
         if(!authenticationResult.Succeeded)
         {
@@ -89,7 +89,7 @@ public class AuthController : ControllerBase
 
     [HttpPost("login")]
     public async Task<ActionResult>
-        LoginAsync([FromBody] AuthenticationRequest request, CancellationToken cancellationToken)
+        LoginAsync([FromBody]LoginRequest request, CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid)
         {

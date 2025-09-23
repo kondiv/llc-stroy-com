@@ -34,7 +34,7 @@ public sealed class AuthService : IAuthService
         _logger = logger;
     }
 
-    public async Task<Result> RegisterAsync(string email, string password, string roleName,
+    public async Task<Result> RegisterAsync(string name, string email, string password, string roleName,
         CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Registering new user");
@@ -55,6 +55,7 @@ public sealed class AuthService : IAuthService
 
             var newUser = new ApplicationUser()
             {
+                Name = name,
                 Email = email,
                 HashPassword = _passwordHasher.HashPassword(password),
                 Role = role

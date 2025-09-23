@@ -3,10 +3,11 @@ using LLCStroyCom.Domain.Enums;
 using LLCStroyCom.Domain.Exceptions;
 using LLCStroyCom.Domain.Repositories;
 using LLCStroyCom.Domain.Response;
+using Microsoft.EntityFrameworkCore;
 
 namespace LLCStroyCom.Infrastructure.Repositories;
 
-public class DefectRepository : IDefectRepository
+public sealed class DefectRepository : IDefectRepository
 {
     private readonly StroyComDbContext _context;
 
@@ -17,8 +18,11 @@ public class DefectRepository : IDefectRepository
     
     public async Task<Defect> GetAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        return await _context.Defects.FindAsync([id], cancellationToken) ??
-               throw CouldNotFindDefect.WithId(id);
+        return await _context.Defects
+                .Include(d => d.ChiefEngineer)
+                .Include(d => d.Project)
+                .FirstOrDefaultAsync(d => d.Id == id, cancellationToken)
+               ?? throw CouldNotFindDefect.WithId(id);
     }
 
     public async Task CreateAsync(Defect defect, CancellationToken cancellationToken = default)

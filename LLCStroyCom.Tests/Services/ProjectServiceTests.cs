@@ -1,4 +1,5 @@
-﻿using LLCStroyCom.Application.Services;
+﻿using AutoMapper;
+using LLCStroyCom.Application.Services;
 using LLCStroyCom.Domain.Dto;
 using LLCStroyCom.Domain.Entities;
 using LLCStroyCom.Domain.Enums;
@@ -22,7 +23,8 @@ public class ProjectServiceTests
     {
         _pageTokenServiceMock = new Mock<IPageTokenService>();
         _projectRepositoryMock = new Mock<IProjectRepository>();
-        _projectService = new ProjectService(_pageTokenServiceMock.Object, _projectRepositoryMock.Object);
+        var mapperMock = new Mock<IMapper>();
+        _projectService = new ProjectService(_pageTokenServiceMock.Object, _projectRepositoryMock.Object, mapperMock.Object);
     }
 
     [Fact]

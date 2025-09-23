@@ -38,6 +38,11 @@ public class StroyComDbContext : DbContext
                 .ValueGeneratedOnAdd()
                 .HasColumnName("id");
             
+            entity.Property(e => e.Name)
+                .IsRequired()
+                .HasMaxLength(255)
+                .HasColumnName("name");
+            
             entity.Property(e => e.Email)
                 .IsRequired()
                 .HasMaxLength(255)
@@ -56,6 +61,9 @@ public class StroyComDbContext : DbContext
             entity.HasOne(u => u.Role)
                 .WithMany(r => r.Users)
                 .HasForeignKey(u => u.RoleId);
+            
+            entity.Property(e => e.CompanyId)
+                .HasColumnName("company_id");
             
             entity.HasOne(u => u.Company)
                 .WithMany(c => c.Employees)

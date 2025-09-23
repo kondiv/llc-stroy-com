@@ -29,6 +29,7 @@ public class UserRepositoryTests
         var applicationUser = new ApplicationUser()
         {
             Id = userId,
+            Name = "name",
             Email = "email",
             HashPassword = "asdfasdfasdf",
             RoleId = 1
@@ -156,6 +157,7 @@ public class UserRepositoryTests
         var applicationUser = new ApplicationUser()
         {
             Id = userId,
+            Name = "name",
             Email = "email",
             HashPassword = "asdfadsfasdf",
             RoleId = 1
@@ -200,6 +202,7 @@ public class UserRepositoryTests
         var email = "email@email.ru";
         var user = new ApplicationUser()
         {
+            Name = "name",
             Email = email,
             HashPassword = "asdfasdfasdf",
             RoleId = 1
@@ -345,6 +348,7 @@ public class UserRepositoryTests
         var user = new ApplicationUser()
         {
             Id = userId,
+            Name = "name",
             Email = "email@email.ru",
             HashPassword = "asdfasdfasdf",
             RoleId = 1,
@@ -386,6 +390,7 @@ public class UserRepositoryTests
         var user = new ApplicationUser()
         {
             Id = userId,
+            Name = "name",
             Email = "email@email.ru",
             HashPassword = "asdfasdfasdf",
             RoleId = 1,
@@ -457,6 +462,7 @@ public class UserRepositoryTests
         var user = new ApplicationUser()
         {
             Id = userId,
+            Name = "name",
             Email = "email@email.com",
             HashPassword = "asdfasdfasdf",
             RoleId = 1,

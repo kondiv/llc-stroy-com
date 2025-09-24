@@ -32,4 +32,16 @@ public sealed class CompanyRepository : ICompanyRepository
         await _context.Companies.AddAsync(company, cancellationToken);
         await _context.SaveChangesAsync(cancellationToken);
     }
+
+    public Task UpdateAsync()
+    {
+        throw new NotImplementedException();
+    }
+
+    public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var company = await GetAsync(id, cancellationToken);
+        _context.Companies.Remove(company);
+        await _context.SaveChangesAsync(cancellationToken);
+    }
 }

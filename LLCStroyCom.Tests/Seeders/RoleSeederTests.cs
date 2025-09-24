@@ -61,9 +61,9 @@ public class RoleSeederTests
         var context = GetInMemoryDbContext();
         var seeder = new RoleSeeder(context);
         
-        var engineer = new ApplicationRole() { Type = RoleType.Engineer };
-        var manager = new ApplicationRole() { Type = RoleType.Manager };
-        var observer = new ApplicationRole() { Type = RoleType.Observer };
+        var engineer = new ApplicationRole { Type = RoleType.Engineer };
+        var manager = new ApplicationRole { Type = RoleType.Manager };
+        var observer = new ApplicationRole { Type = RoleType.Observer };
         
         await context.Roles.AddRangeAsync(engineer, manager, observer);
         await context.SaveChangesAsync();

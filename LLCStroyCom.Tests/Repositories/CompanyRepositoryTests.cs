@@ -160,4 +160,62 @@ public class CompanyRepositoryTests
         // Assert
         await Assert.ThrowsAsync<ArgumentNullException>(act);
     }
+
+    [Fact]
+    public async Task DeleteAsync_WhenCompanyFound_ShouldDeleteCompanyFromDb()
+    {
+        // Arrange
+        var company = new Company()
+        {
+            Id = Guid.NewGuid(),
+            Name = "name"
+        };
+        var context = GetInMemoryDbContext();
+        await context.Companies.AddAsync(company);
+        await context.SaveChangesAsync();
+        
+        ICompanyRepository companyRepository = new CompanyRepository(context);
+        
+        // Act
+        await companyRepository.DeleteAsync(company.Id);
+        
+        // Assert
+        Assert.Equal(0, await context.Companies.CountAsync());
+    }
+
+    [Fact]
+    public async Task DeleteAsync_WhenCompanyNotFound_ShouldThrowCompanyNotFoundException()
+    {
+        // Arrange
+        
+        // Act
+        var act = () => _companyRepository.DeleteAsync(Guid.NewGuid());
+        
+        // Assert
+        await Assert.ThrowsAsync<CouldNotFindCompany>(act);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_WhenOperationCanceled_ShouldThrowOperationCanceledException()
+    {
+        // Arrange
+        var company = new Company()
+        {
+            Id = Guid.NewGuid(),
+            Name = "name"
+        };
+        var cancellationToken = new CancellationToken(canceled: true);
+        var context = GetInMemoryDbContext();
+        
+        await context.Companies.AddAsync(company);
+        await context.SaveChangesAsync();
+        ICompanyRepository companyRepository = new CompanyRepository(context);
+        
+        // Act
+        var act = () => companyRepository.DeleteAsync(company.Id, cancellationToken);
+        
+        // Assert
+        await Assert.ThrowsAsync<TaskCanceledException>(act);
+        Assert.Equal(1, await context.Companies.CountAsync());
+    }
 }

@@ -86,4 +86,50 @@ public class CompanyServiceTests
         // Assert
         await Assert.ThrowsAsync<OperationCanceledException>(act);
     }
+
+    [Fact]
+    public async Task DeleteAsync_WhenCompanyNotFound_ShouldThrowCouldNotFindCompany()
+    {
+        // Arrange
+        var companyId = Guid.NewGuid();
+        _companyRepositoryMock
+            .Setup(x => x.DeleteAsync(companyId, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(CouldNotFindCompany.WithId(companyId));
+        
+        // Act
+        var act = () => _companyService.DeleteAsync(companyId);
+        
+        // Assert
+        await Assert.ThrowsAsync<CouldNotFindCompany>(act);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_WhenOperationCanceled_ShouldThrowOperationCanceled()
+    {
+        // Arrange
+        var cancellationToken = new CancellationToken(canceled: true);
+        _companyRepositoryMock
+            .Setup(x => x.DeleteAsync(It.IsAny<Guid>(), cancellationToken))
+            .ThrowsAsync(new OperationCanceledException());
+        
+        // Act
+        var act = () => _companyService.DeleteAsync(Guid.NewGuid(), cancellationToken);
+        
+        // Assert
+        await Assert.ThrowsAsync<OperationCanceledException>(act);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_WhenDeletingSuccessful_ShouldReturnNothing()
+    {
+        // Arrange
+        var defectId = Guid.NewGuid();
+        
+        // Act
+        await _companyService.DeleteAsync(defectId);
+        
+        // Assert
+        _companyRepositoryMock
+            .Verify(r => r.DeleteAsync(defectId, It.IsAny<CancellationToken>()), Times.Once);
+    }
 }

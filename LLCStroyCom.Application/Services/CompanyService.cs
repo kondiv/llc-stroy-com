@@ -33,9 +33,19 @@ public class CompanyService : ICompanyService
         throw new NotImplementedException();
     }
 
-    public Task<CompanyDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<CompanyDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        _logger.LogInformation($"Trying to get company with Id: {id}");
+
+        var company = await _companyRepository.GetAsync(id, cancellationToken);
+        
+        _logger.LogInformation("Got company entity");
+
+        var companyDto = _mapper.Map<CompanyDto>(company);
+        
+        _logger.LogInformation("Mapping succeeded");
+
+        return companyDto;
     }
 
     public Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)

@@ -55,7 +55,7 @@ public class CompanyController : ControllerBase
         {
             _logger.LogInformation("Request for creating company");
             var result = await _companyService.CreateAsync(request, cancellationToken);
-            return CreatedAtRoute("GetCompany", new{ id = result.Id }, result);
+            return CreatedAtRoute("GetCompany", new { id = result.Id }, result);
         }
         catch (DbUpdateException e)
         {
@@ -116,8 +116,8 @@ public class CompanyController : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status409Conflict)] 
-    public async Task<ActionResult<Guid>> AddEmployeeAsync([FromRoute]Guid id, [FromRoute]Guid employeeId,
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<Guid>> AddEmployeeAsync([FromRoute] Guid id, [FromRoute] Guid employeeId,
         CancellationToken cancellationToken = default)
     {
         try
@@ -149,7 +149,7 @@ public class CompanyController : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<ActionResult> RemoveEmployeeAsync([FromRoute]Guid id, [FromRoute]Guid employeeId,
+    public async Task<ActionResult> RemoveEmployeeAsync([FromRoute] Guid id, [FromRoute] Guid employeeId,
         CancellationToken cancellationToken = default)
     {
         try
@@ -168,5 +168,25 @@ public class CompanyController : ControllerBase
             _logger.LogWarning(e, e.Message);
             return Conflict(e.InnerException?.Message);
         }
+    }
+
+    [Authorize]
+    [HttpPatch("{id:guid}/employees/{employeeId:guid}")]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status405MethodNotAllowed)]
+    public ActionResult UpdateEmployeeAsync([FromRoute] Guid id, [FromRoute] Guid employeeId,
+        CancellationToken cancellationToken = default)
+    {
+        return StatusCode(StatusCodes.Status405MethodNotAllowed);
+    }
+
+    [Authorize]
+    [HttpPut("{id:guid}/employees/{employeeId:guid}")]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status405MethodNotAllowed)]
+    public ActionResult ReplaceEmployeeAsync([FromRoute] Guid id, [FromRoute] Guid employeeId,
+        CancellationToken cancellationToken = default)
+    {
+        return StatusCode(StatusCodes.Status405MethodNotAllowed);
     }
 }

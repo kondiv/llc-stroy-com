@@ -3,10 +3,12 @@ using LLCStroyCom.Domain.Dto;
 using LLCStroyCom.Domain.Exceptions;
 using LLCStroyCom.Domain.Requests;
 using LLCStroyCom.Domain.Services;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
+using JsonSerializer = Newtonsoft.Json.JsonSerializer;
 
 namespace LLCStroyCom.Tests.Controllers;
 
@@ -14,7 +16,7 @@ public class CompanyControllerTests
 {
     private readonly Mock<ICompanyService> _companyServiceMock;
     private readonly CompanyController _companyController;
-
+    
     public CompanyControllerTests()
     {
         _companyServiceMock = new Mock<ICompanyService>();
@@ -115,6 +117,8 @@ public class CompanyControllerTests
         var actualResult = Assert.IsType<NoContentResult>(result);
         Assert.NotNull(actualResult);
         Assert.Equal(204, actualResult.StatusCode);
+        _companyServiceMock.Verify(x => x.DeleteAsync(companyId, It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]
@@ -134,5 +138,39 @@ public class CompanyControllerTests
         var actualResult = Assert.IsType<NotFoundObjectResult>(result);
         Assert.NotNull(actualResult);
         Assert.Equal(404, actualResult.StatusCode);
+    }
+
+    [Fact]
+    public async Task PatchAsync_WhenUpdatedSuccessfully_ShouldReturnNoContentResult()
+    {
+        // Arrange
+        var jsonPatchDocument = new JsonPatchDocument<CompanyPatchDto>();
+        jsonPatchDocument.Replace(x => x.Name, "new_name");
+        
+        // Act
+        var result = await _companyController.PatchAsync(Guid.NewGuid(), jsonPatchDocument);
+        
+        // Assert
+        var actualResult = Assert.IsType<NoContentResult>(result);
+        Assert.NotNull(actualResult);
+        Assert.Equal(204, actualResult.StatusCode);
+    }
+
+    [Fact]
+    public async Task PatchAsync_WhenCompanyNotFound_ShouldReturnNotFoundResult()
+    {
+        // Arrange
+        var companyId = Guid.NewGuid();
+        var jsonPatchDocument = new JsonPatchDocument<CompanyPatchDto>();
+
+        _companyServiceMock
+            .Setup(x => x.UpdateAsync(companyId, jsonPatchDocument, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(CouldNotFindCompany.WithId(companyId));
+        
+        // Act
+        var result = await _companyController.PatchAsync(companyId, jsonPatchDocument);
+        
+        // Assert
+        var actualResult = Assert.IsType<NotFoundResult>(result);
     }
 }

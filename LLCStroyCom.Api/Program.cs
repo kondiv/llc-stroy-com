@@ -45,6 +45,7 @@ builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
 builder.Services.AddScoped<IDefectRepository, DefectRepository>();
+builder.Services.AddScoped<ICompanyRepository, CompanyRepository>();
 
 #endregion
 
@@ -60,6 +61,7 @@ builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
 builder.Services.AddScoped<IPageTokenService, PageTokenService>();
 builder.Services.AddScoped<IProjectService, ProjectService>();
 builder.Services.AddScoped<IDefectService, DefectService>();
+builder.Services.AddScoped<ICompanyService, CompanyService>();
 
 #endregion
 
@@ -102,9 +104,9 @@ builder.Services.AddAuthentication(options =>
         };
     });
 
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddNewtonsoftJson();
 builder.Services.AddOpenApi();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen().AddSwaggerGenNewtonsoftSupport();
 
 var app = builder.Build();
 

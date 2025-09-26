@@ -3,6 +3,7 @@ using LLCStroyCom.Domain.Entities;
 using LLCStroyCom.Domain.Exceptions;
 using LLCStroyCom.Domain.Models.PageTokens;
 using LLCStroyCom.Domain.Repositories;
+using Microsoft.EntityFrameworkCore;
 
 namespace LLCStroyCom.Infrastructure.Repositories;
 
@@ -27,15 +28,27 @@ public sealed class CompanyRepository : ICompanyRepository
                throw CouldNotFindCompany.WithId(id);
     }
 
-    public async Task CreateAsync(Company company, CancellationToken cancellationToken = default)
+    public async Task<Company> GetExtendedAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await _context.Companies
+            .Include(c => c.Employees)
+            .Include(c => c.Projects)
+            .FirstOrDefaultAsync(c => c.Id == id, cancellationToken)
+            ?? throw CouldNotFindCompany.WithId(id);
+    }
+
+    public async Task<Company> CreateAsync(Company company, CancellationToken cancellationToken = default)
     {
         await _context.Companies.AddAsync(company, cancellationToken);
         await _context.SaveChangesAsync(cancellationToken);
+
+        return company;
     }
 
-    public Task UpdateAsync()
+    public async Task UpdateAsync(Company company, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        _context.Companies.Update(company);
+        await _context.SaveChangesAsync(cancellationToken);
     }
 
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)

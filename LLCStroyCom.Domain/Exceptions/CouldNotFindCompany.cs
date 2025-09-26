@@ -1,6 +1,6 @@
 ﻿namespace LLCStroyCom.Domain.Exceptions;
 
-public class CouldNotFindCompany : Exception
+public class CouldNotFindCompany : CouldNotFind
 {
     private CouldNotFindCompany(string message)
         : base(message)

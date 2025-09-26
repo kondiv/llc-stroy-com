@@ -1,10 +1,10 @@
 ﻿namespace LLCStroyCom.Domain.Requests;
 
-public class CreateCompanyRequest
+public class CompanyCreateRequest
 {
     public string Name { get; init; }
 
-    public CreateCompanyRequest(string name)
+    public CompanyCreateRequest(string name)
     {
         Name = name;
     }

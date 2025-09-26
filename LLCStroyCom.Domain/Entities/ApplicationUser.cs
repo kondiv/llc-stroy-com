@@ -1,4 +1,6 @@
-﻿namespace LLCStroyCom.Domain.Entities;
+﻿using LLCStroyCom.Domain.Exceptions;
+
+namespace LLCStroyCom.Domain.Entities;
 
 public class ApplicationUser
 {
@@ -10,7 +12,7 @@ public class ApplicationUser
     
     public string HashPassword { get; set; } = null!;
     
-    public Guid? CompanyId { get; set; }
+    public Guid? CompanyId { get; private set; }
 
     public virtual Company? Company { get; set; }
     
@@ -21,4 +23,22 @@ public class ApplicationUser
     public virtual ICollection<Defect> Defects { get; set; } = [];
     
     public ICollection<RefreshToken> RefreshTokens { get; set; } = [];
+
+    public void SetCompany(Guid companyId)
+    {
+        if (CompanyId is not null)
+        {
+            throw AlreadyWorks.InCompany(CompanyId.Value);
+        }
+        
+        CompanyId = companyId;
+    }
+
+    public void RemoveCompany()
+    {
+        if (CompanyId is not null)
+        {
+            CompanyId = null;
+        }
+    }
 }

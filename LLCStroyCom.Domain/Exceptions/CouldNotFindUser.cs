@@ -1,6 +1,6 @@
 namespace LLCStroyCom.Domain.Exceptions;
 
-public class CouldNotFindUser : Exception
+public class CouldNotFindUser : CouldNotFind
 {
     private CouldNotFindUser(string message)
         : base(message)

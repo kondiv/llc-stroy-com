@@ -1,7 +1,10 @@
-﻿namespace LLCStroyCom.Domain.Dto;
+﻿using System.Text.Json.Serialization;
+
+namespace LLCStroyCom.Domain.Dto;
 
 public class CompanyDto
 {
+    [JsonIgnore]
     public Guid Id { get; init; }
     public string Name { get; init; }
 

@@ -5,7 +5,9 @@ using LLCStroyCom.Domain.Dto;
 using LLCStroyCom.Domain.Entities;
 using LLCStroyCom.Domain.Exceptions;
 using LLCStroyCom.Domain.Repositories;
+using LLCStroyCom.Domain.Requests;
 using LLCStroyCom.Domain.Services;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
 
@@ -14,18 +16,23 @@ namespace LLCStroyCom.Tests.Services;
 public class CompanyServiceTests
 {
     private readonly Mock<ICompanyRepository> _companyRepositoryMock;
+    private readonly Mock<IUserRepository> _userRepositoryMock;
     private readonly ICompanyService _companyService;
 
     public CompanyServiceTests()
     {
         _companyRepositoryMock = new Mock<ICompanyRepository>();
+        _userRepositoryMock = new Mock<IUserRepository>();
         var loggerMock = new Mock<ILogger<CompanyService>>();
         var mapperConfiguration = new MapperConfiguration(cfg =>
         {
             cfg.AddProfile<CompanyProfile>();
         }, new LoggerFactory());
         
-        _companyService = new CompanyService(_companyRepositoryMock.Object, loggerMock.Object,
+        _companyService = new CompanyService(
+            _companyRepositoryMock.Object,
+            _userRepositoryMock.Object,
+            loggerMock.Object,
             mapperConfiguration.CreateMapper());
     }
 
@@ -37,8 +44,6 @@ public class CompanyServiceTests
         {
             Id = Guid.NewGuid(),
             Name = "Company",
-            Employees = [],
-            Projects = []
         };
         
         _companyRepositoryMock
@@ -131,5 +136,245 @@ public class CompanyServiceTests
         // Assert
         _companyRepositoryMock
             .Verify(r => r.DeleteAsync(defectId, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task CreateAsync_WhenThrowsArgumentException_ShouldThrowProjectAlreadyExists()
+    {
+        // Arrange
+        _companyRepositoryMock
+            .Setup(r => r.CreateAsync(It.IsAny<Company>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ArgumentException());
+        
+        // Act
+        var act = () => _companyService.CreateAsync(new CompanyCreateRequest("name"));
+        
+        // Assert
+        await Assert.ThrowsAsync<ArgumentException>(act);
+    }
+
+    [Fact]
+    public async Task CreateAsync_WhenCreateSuccessful_ShouldReturnNothing()
+    {
+        // Arrange
+        var createCompanyRequest = new CompanyCreateRequest("name");
+        
+        // Act
+        await _companyService.CreateAsync(createCompanyRequest);
+        
+        // Assert
+        _companyRepositoryMock.Verify(r => r.CreateAsync(It.IsAny<Company>(), It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task CreateAsync_WhenOperationCanceled_ShouldThrowOperationCanceled()
+    {
+        // Arrange
+        var cancellationToken = new CancellationToken(canceled: true);
+        
+        _companyRepositoryMock
+            .Setup(r => r.CreateAsync(It.IsAny<Company>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new OperationCanceledException());
+        
+        // Act
+        var act = () => _companyService.CreateAsync(new CompanyCreateRequest("name"), cancellationToken);
+        
+        // Assert
+        await Assert.ThrowsAsync<OperationCanceledException>(act);
+    }
+
+    [Fact]
+    public async Task CreateAsync_WhenRequestIsNull_ShouldThrowArgumentNullException()
+    {
+        // Arrange
+        CompanyCreateRequest? request = null;
+        
+        // Act
+        var act = () => _companyService.CreateAsync(request!);
+        
+        // Assert
+        await Assert.ThrowsAsync<ArgumentNullException>(act);
+    }
+
+    [Fact]
+    public async Task AddEmployeeAsync_WhenUserNotFound_ShouldThrowCouldNotFindUser()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        
+        _userRepositoryMock
+            .Setup(x => x.GetAsync(userId, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(CouldNotFindUser.WithId(userId));
+        
+        // Act
+        var act = () => _companyService.AddEmployeeAsync(Guid.NewGuid(), userId);
+        
+        // Assert
+        await Assert.ThrowsAsync<CouldNotFindUser>(act);
+    }
+    
+    [Fact]
+    public async Task AddEmployeeAsync_WhenCompanyNotFound_ShouldThrowCouldNotFindCompany()
+    {
+        // Arrange
+        var companyId = Guid.NewGuid();
+        
+        _companyRepositoryMock
+            .Setup(x => x.GetExtendedAsync(companyId, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(CouldNotFindCompany.WithId(companyId));
+        
+        // Act
+        var act = () => _companyService.AddEmployeeAsync(companyId, Guid.NewGuid());
+        
+        // Assert
+        await Assert.ThrowsAsync<CouldNotFindCompany>(act);
+    }
+
+    [Fact]
+    public async Task AddEmployeeAsync_WhenEmployeeAlreadyHasCompany_ShouldThrowAlreadyWorks()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        var companyId = Guid.NewGuid();
+        var employee = new ApplicationUser()
+        {
+            Id = userId,
+        };
+        var company = new Company()
+        {
+            Id = companyId,
+        };
+        employee.SetCompany(Guid.NewGuid());
+        
+        _userRepositoryMock
+            .Setup(x => x.GetAsync(userId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(employee);
+        
+        _companyRepositoryMock
+            .Setup(x => x.GetExtendedAsync(companyId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(company);
+        
+        // Act
+        var act = () => _companyService.AddEmployeeAsync(companyId, userId);
+        
+        // Assert
+        await Assert.ThrowsAsync<AlreadyWorks>(act);
+    }
+
+    // Can't happen in scenario of adding employee by AddEmployeeAsync method
+    // Test written for testing Company entity method AddEmployee
+    [Fact]
+    public async Task AddEmployeeAsync_WhenCompanyAlreadyHasThisEmployee_ShouldThrowAlreadyWorks()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        var companyId = Guid.NewGuid();
+        var employee = new ApplicationUser()
+        {
+            Id = userId,
+        };
+        var company = new Company()
+        {
+            Id = companyId,
+        };
+        company.AddEmployee(employee);
+        
+        _userRepositoryMock
+            .Setup(x => x.GetAsync(userId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(employee);
+        
+        _companyRepositoryMock
+            .Setup(x => x.GetExtendedAsync(companyId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(company);
+        
+        // Act
+        var act = () => _companyService.AddEmployeeAsync(companyId, userId);
+        
+        // Assert
+        await Assert.ThrowsAsync<AlreadyWorks>(act);
+    }
+
+    [Fact]
+    public async Task AddEmployeeAsync_WhenDbUpdateConcurrencyException_ShouldThrowConcurrencyException()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        var companyId = Guid.NewGuid();
+        var employee = new ApplicationUser()
+        {
+            Id = userId,
+        };
+        var company = new Company()
+        {
+            Id = companyId,
+        };
+        
+        _userRepositoryMock
+            .Setup(x => x.GetAsync(userId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(employee);
+        
+        _companyRepositoryMock
+            .Setup(x => x.GetExtendedAsync(companyId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(company);
+
+        _companyRepositoryMock
+            .Setup(x => x.UpdateAsync(company, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new DbUpdateConcurrencyException());
+        
+        // Act
+        var act = () => _companyService.AddEmployeeAsync(companyId, userId);
+        
+        // Assert
+        await Assert.ThrowsAsync<DbUpdateConcurrencyException>(act);
+    }
+
+    [Fact]
+    public async Task AddEmployeeAsync_WhenOperationCanceledException_ShouldThrowOperationCanceledException()
+    {
+        // Arrange
+        var cancellationToken = new CancellationToken(canceled: true);
+        
+        _userRepositoryMock
+            .Setup(x => x.GetAsync(It.IsAny<Guid>(), cancellationToken))
+            .ThrowsAsync(new OperationCanceledException());
+        
+        // Act
+        var act = () => _companyService.AddEmployeeAsync(Guid.NewGuid(), Guid.NewGuid(), cancellationToken);
+        
+        // Assert
+        await Assert.ThrowsAsync<OperationCanceledException>(act);
+    }
+
+    [Fact]
+    public async Task AddEmployeeAsync_WhenEverythingOk_ShouldUpdateCompany()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        var companyId = Guid.NewGuid();
+        var employee = new ApplicationUser()
+        {
+            Id = userId,
+        };
+        var company = new Company()
+        {
+            Id = companyId,
+        };
+        
+        _userRepositoryMock
+            .Setup(x => x.GetAsync(userId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(employee);
+        
+        _companyRepositoryMock
+            .Setup(x => x.GetExtendedAsync(companyId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(company);
+        
+        // Act
+        await _companyService.AddEmployeeAsync(companyId, userId);
+        
+        // Assert
+        _companyRepositoryMock.Verify(x => x.UpdateAsync(company, It.IsAny<CancellationToken>()), Times.Once);
+        Assert.NotNull(employee.CompanyId);
+        Assert.NotEmpty(company.Employees);
     }
 }

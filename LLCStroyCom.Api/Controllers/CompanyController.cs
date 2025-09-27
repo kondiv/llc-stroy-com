@@ -88,7 +88,6 @@ public class CompanyController : ControllerBase
     [HttpPatch("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult> PatchAsync([FromRoute] Guid id, JsonPatchDocument<CompanyPatchDto> patch,
         CancellationToken cancellationToken = default)
@@ -103,11 +102,6 @@ public class CompanyController : ControllerBase
         {
             _logger.LogWarning(e, e.Message);
             return NotFound();
-        }
-        catch (DbUpdateException e)
-        {
-            _logger.LogWarning(e, e.Message);
-            return Conflict(e.InnerException?.Message);
         }
     }
 
@@ -174,7 +168,7 @@ public class CompanyController : ControllerBase
     [HttpPatch("{id:guid}/employees/{employeeId:guid}")]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status405MethodNotAllowed)]
-    public ActionResult UpdateEmployeeAsync([FromRoute] Guid id, [FromRoute] Guid employeeId,
+    public ActionResult UpdateEmployeeAsync([FromRoute] Guid id, [FromRoute] Guid employeeId, JsonPatchDocument patchDocument,
         CancellationToken cancellationToken = default)
     {
         return StatusCode(StatusCodes.Status405MethodNotAllowed);

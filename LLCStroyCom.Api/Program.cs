@@ -29,8 +29,7 @@ builder.Services.AddAutoMapper(cfg => { },
     typeof(CompanyProfile),
     typeof(DefectProfile),
     typeof(ProjectProfile),
-    typeof(UserProfile),
-    typeof(ChiefEngineerProfile));
+    typeof(UserProfile));
 
 #region Seeders
 

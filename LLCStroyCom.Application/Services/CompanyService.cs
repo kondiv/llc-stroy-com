@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using LLCStroyCom.Domain.Dto;
 using LLCStroyCom.Domain.Entities;
+using LLCStroyCom.Domain.Exceptions;
 using LLCStroyCom.Domain.Repositories;
 using LLCStroyCom.Domain.Requests;
 using LLCStroyCom.Domain.Services;
@@ -27,7 +28,18 @@ public class CompanyService : ICompanyService
         _logger = logger;
         _mapper = mapper;
     }
-    
+
+    public async Task<CompanyDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation($"Trying to get company with Id: {id}");
+        
+        var company = await _companyRepository.GetAsync(id, cancellationToken);
+
+        var companyDto = _mapper.Map<CompanyDto>(company);
+
+        return companyDto;
+    }
+
     public async Task<CompanyDto> CreateAsync(CompanyCreateRequest request, CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Creating Company");
@@ -42,6 +54,44 @@ public class CompanyService : ICompanyService
 
         _logger.LogInformation("Created Company");
         return companyDto;
+    }
+
+    public async Task UpdateAsync(Guid id, JsonPatchDocument<CompanyPatchDto> patchDocument, CancellationToken cancellationToken = default)
+    {
+        var company = await _companyRepository.GetAsync(id, cancellationToken);
+        _logger.LogInformation("Found company");
+        
+        var companyDto = _mapper.Map<CompanyPatchDto>(company);
+        
+        patchDocument.ApplyTo(companyDto);
+        
+        _mapper.Map(companyDto, company);
+        
+        await _companyRepository.UpdateAsync(company, cancellationToken);
+        _logger.LogInformation("Updated company");
+    }
+
+    public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation($"Trying to delete company with Id: {id}");
+        
+        await _companyRepository.DeleteAsync(id, cancellationToken);
+        
+        _logger.LogInformation($"Company with Id: {id} was successfully deleted");
+    }
+
+    public async Task<EmployeeDto> GetEmployeeAsync(Guid companyId, Guid employeeId, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Trying to get employee {employeeId} from company {companyId}", employeeId, companyId);
+        
+        var employee = await _userRepository.GetAsync(employeeId, cancellationToken);
+
+        if (employee.CompanyId is null || employee.CompanyId != companyId)
+            throw CouldNotFindUser.WithId(employeeId);
+        
+        var employeeDto = _mapper.Map<EmployeeDto>(employee);
+
+        return employeeDto;
     }
 
     public async Task<Guid> AddEmployeeAsync(Guid companyId, Guid employeeId, CancellationToken cancellationToken = default)
@@ -62,32 +112,6 @@ public class CompanyService : ICompanyService
         return employee.Id;
     }
 
-    public async Task<CompanyDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
-    {
-        _logger.LogInformation($"Trying to get company with Id: {id}");
-        
-        var company = await _companyRepository.GetAsync(id, cancellationToken);
-
-        var companyDto = _mapper.Map<CompanyDto>(company);
-
-        return companyDto;
-    }
-
-    public async Task UpdateAsync(Guid id, JsonPatchDocument<CompanyPatchDto> patchDocument, CancellationToken cancellationToken = default)
-    {
-        var company = await _companyRepository.GetAsync(id, cancellationToken);
-        _logger.LogInformation("Found company");
-        
-        var companyDto = _mapper.Map<CompanyPatchDto>(company);
-        
-        patchDocument.ApplyTo(companyDto);
-        
-        _mapper.Map(companyDto, company);
-        
-        await _companyRepository.UpdateAsync(company, cancellationToken);
-        _logger.LogInformation("Updated company");
-    }
-
     public async Task RemoveEmployeeAsync(Guid companyId, Guid employeeId, CancellationToken cancellationToken = default)
     {
         var employee = await _userRepository.GetAsync(employeeId, cancellationToken);
@@ -99,14 +123,5 @@ public class CompanyService : ICompanyService
         
         await _companyRepository.UpdateAsync(company, cancellationToken);
         _logger.LogInformation("Removed employee");
-    }
-
-    public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
-    {
-        _logger.LogInformation($"Trying to delete company with Id: {id}");
-        
-        await _companyRepository.DeleteAsync(id, cancellationToken);
-        
-        _logger.LogInformation($"Company with Id: {id} was successfully deleted");
     }
 }

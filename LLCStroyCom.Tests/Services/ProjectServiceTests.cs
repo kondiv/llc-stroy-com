@@ -44,7 +44,6 @@ public class ProjectServiceTests
             Id = Guid.NewGuid(),
             Name = "Project1",
             Status = Status.Completed,
-            CompanyId = Guid.NewGuid(),
             City = "Москва"
         };
 
@@ -60,7 +59,6 @@ public class ProjectServiceTests
         Assert.IsType<ProjectDto>(result);
         Assert.Equal(project.Name, result.Name);
         Assert.Equal(project.Status, result.Status);
-        Assert.Equal(project.CompanyId, result.CompanyId);
     }
 
     [Fact]

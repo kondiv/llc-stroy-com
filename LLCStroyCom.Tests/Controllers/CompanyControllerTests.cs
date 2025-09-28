@@ -1,0 +1,413 @@
+﻿using LLCStroyCom.Api.Controllers;
+using LLCStroyCom.Domain.Dto;
+using LLCStroyCom.Domain.Exceptions;
+using LLCStroyCom.Domain.Requests;
+using LLCStroyCom.Domain.Services;
+using Microsoft.AspNetCore.JsonPatch;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Moq;
+
+namespace LLCStroyCom.Tests.Controllers;
+
+public class CompanyControllerTests
+{
+    private readonly Mock<ICompanyService> _companyServiceMock;
+    private readonly CompanyController _companyController;
+    
+    public CompanyControllerTests()
+    {
+        _companyServiceMock = new Mock<ICompanyService>();
+        var loggerMock = new Mock<ILogger<CompanyController>>();
+        _companyController = new CompanyController(_companyServiceMock.Object, loggerMock.Object);
+    }
+
+    [Fact]
+    public async Task GetAsync_WhenCompanyFound_ShouldReturnOkObjectResult()
+    {
+        // Arrange
+        _companyServiceMock
+            .Setup(x => x.GetAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CompanyDto(Guid.NewGuid(), "company_name"));
+        
+        // Act
+        var result = await _companyController.GetAsync(Guid.NewGuid());
+        
+        // Assert
+        Assert.IsType<ActionResult<CompanyDto>>(result);
+        Assert.NotNull(result.Result);
+        
+        var actualResult = result.Result as OkObjectResult;
+        Assert.NotNull(actualResult);
+        Assert.NotNull(actualResult.Value);
+
+        var value = actualResult.Value as CompanyDto;
+        Assert.NotNull(value);
+    }
+
+    [Fact]
+    public async Task GetAsync_WhenCompanyNotFound_ShouldReturnNotFoundResult()
+    {
+        // Arrange
+        var companyId = Guid.NewGuid();
+
+        _companyServiceMock
+            .Setup(x => x.GetAsync(companyId, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(CouldNotFindCompany.WithId(companyId));
+        
+        // Act
+        var result = await _companyController.GetAsync(companyId);
+        
+        // Assert
+        Assert.IsType<ActionResult<CompanyDto>>(result);
+        Assert.IsType<NotFoundObjectResult>(result.Result);
+    }
+
+    [Fact]
+    public async Task CreateAsync_WhenCompanyCreated_ShouldReturnCreatedAtRouteResult()
+    {
+        // Arrange
+        var request = new CompanyCreateRequest("name");
+        var companyDto = new CompanyDto(Guid.NewGuid(), request.Name);
+        _companyServiceMock
+            .Setup(x => x.CreateAsync(request, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(companyDto);
+        
+        // Act
+        var result = await _companyController.CreateAsync(request);
+        
+        // Assert
+        var actualResult = Assert.IsType<CreatedAtRouteResult>(result.Result);
+        Assert.NotNull(actualResult);
+        Assert.Equal(201, actualResult.StatusCode);
+        Assert.Equal(companyDto, actualResult.Value);
+    }
+
+    [Fact]
+    public async Task CreateAsync_WhenCompanyAlreadyExists_ShouldReturnConflictObjectResult()
+    {
+        // Arrange
+        var request = new CompanyCreateRequest("name");
+
+        _companyServiceMock
+            .Setup(x => x.CreateAsync(request, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new DbUpdateConcurrencyException());
+        
+        // Act
+        var result = await _companyController.CreateAsync(request);
+        
+        // Assert
+        var actualResult = Assert.IsType<ConflictObjectResult>(result.Result);
+        Assert.NotNull(actualResult);
+        Assert.Equal(409, actualResult.StatusCode);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_WhenDeletedSuccessfully_ShouldReturnNoContentResult()
+    {
+        // Arrange
+        var companyId = Guid.NewGuid();
+        
+        // Act
+        var result = await _companyController.DeleteAsync(companyId);
+        
+        // Assert
+        var actualResult = Assert.IsType<NoContentResult>(result);
+        Assert.NotNull(actualResult);
+        Assert.Equal(204, actualResult.StatusCode);
+        _companyServiceMock.Verify(x => x.DeleteAsync(companyId, It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_WhenCompanyNotFound_ShouldReturnNotFoundObjectResult()
+    {
+        // Arrange
+        var companyId = Guid.NewGuid();
+        
+        _companyServiceMock
+            .Setup(x => x.DeleteAsync(companyId, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(CouldNotFindCompany.WithId(companyId));
+        
+        // Act
+        var result = await _companyController.DeleteAsync(companyId);
+        
+        // Assert
+        var actualResult = Assert.IsType<NotFoundObjectResult>(result);
+        Assert.NotNull(actualResult);
+        Assert.Equal(404, actualResult.StatusCode);
+    }
+
+    [Fact]
+    public async Task PatchAsync_WhenUpdatedSuccessfully_ShouldReturnNoContentResult()
+    {
+        // Arrange
+        var jsonPatchDocument = new JsonPatchDocument<CompanyPatchDto>();
+        jsonPatchDocument.Replace(x => x.Name, "new_name");
+        
+        // Act
+        var result = await _companyController.PatchAsync(Guid.NewGuid(), jsonPatchDocument);
+        
+        // Assert
+        var actualResult = Assert.IsType<NoContentResult>(result);
+        Assert.NotNull(actualResult);
+        Assert.Equal(204, actualResult.StatusCode);
+    }
+
+    [Fact]
+    public async Task PatchAsync_WhenCompanyNotFound_ShouldReturnNotFoundResult()
+    {
+        // Arrange
+        var companyId = Guid.NewGuid();
+        var jsonPatchDocument = new JsonPatchDocument<CompanyPatchDto>();
+
+        _companyServiceMock
+            .Setup(x => x.UpdateAsync(companyId, jsonPatchDocument, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(CouldNotFindCompany.WithId(companyId));
+        
+        // Act
+        var result = await _companyController.PatchAsync(companyId, jsonPatchDocument);
+        
+        // Assert
+        Assert.IsType<NotFoundResult>(result);
+    }
+
+    [Fact]
+    public async Task AddEmployeeAsync_WhenAddedSuccessfully_ShouldReturnCreatedAtRouteResult()
+    {
+        // Arrange
+        var companyId = Guid.NewGuid();
+        var employeeId = Guid.NewGuid();
+
+        _companyServiceMock
+            .Setup(x => x.AddEmployeeAsync(companyId, employeeId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(employeeId);
+        
+        // Act
+        var result = await _companyController.AddEmployeeAsync(companyId, employeeId);
+        
+        // Assert
+        var actualResult = Assert.IsType<CreatedAtRouteResult>(result.Result);
+        Assert.Equal(employeeId, actualResult.Value);
+    }
+
+    [Fact]
+    public async Task AddEmployeeAsync_WhenEmployeeNotFound_ShouldReturnNotFoundObjectResult()
+    {
+        // Arrange
+        var companyId = Guid.NewGuid();
+        var employeeId = Guid.NewGuid();
+        
+        _companyServiceMock
+            .Setup(x => x.AddEmployeeAsync(companyId, employeeId, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(CouldNotFindUser.WithId(employeeId));
+        
+        // Act
+        var result = await _companyController.AddEmployeeAsync(companyId, employeeId);
+        
+        // Assert
+        var actualResult = Assert.IsType<NotFoundObjectResult>(result.Result);
+        Assert.NotNull(actualResult.Value);
+    }
+
+    [Fact]
+    public async Task AddEmployeeAsync_WhenCompanyNotFound_ShouldReturnNotFoundResult()
+    {
+        // Arrange
+        var companyId = Guid.NewGuid();
+        var employeeId = Guid.NewGuid();
+        
+        _companyServiceMock
+            .Setup(x => x.AddEmployeeAsync(companyId, employeeId, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(CouldNotFindCompany.WithId(employeeId));
+        
+        // Act
+        var result = await _companyController.AddEmployeeAsync(companyId, employeeId);
+        
+        // Assert
+        var actualResult = Assert.IsType<NotFoundObjectResult>(result.Result);
+        Assert.NotNull(actualResult.Value);
+    }
+
+    [Fact]
+    public async Task AddEmployeeAsync_WhenEmployeeAlreadyWorksInOtherCompany_ShouldReturnConflictObjectResult()
+    {
+        // Arrange
+        var companyId = Guid.NewGuid();
+        var employeeId = Guid.NewGuid();
+
+        _companyServiceMock
+            .Setup(x => x.AddEmployeeAsync(companyId, employeeId, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(AlreadyWorks.InCompany(Guid.NewGuid()));
+        
+        // Act
+        var result = await _companyController.AddEmployeeAsync(companyId, employeeId);
+        
+        // Assert
+        var actualResult = Assert.IsType<ConflictObjectResult>(result.Result);
+        Assert.NotNull(actualResult.Value);
+    }
+
+    [Fact]
+    public async Task AddEmployeeAsync_WhenRaceCondition_ShouldReturnConflictObjectResult()
+    {
+        // Arrange
+        var companyId = Guid.NewGuid();
+        var employeeId = Guid.NewGuid();
+        
+        _companyServiceMock
+            .Setup(x => x.AddEmployeeAsync(companyId, employeeId, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new DbUpdateConcurrencyException());
+        
+        // Act
+        var result = await _companyController.AddEmployeeAsync(companyId, employeeId);
+        
+        // Assert
+        Assert.IsType<ConflictObjectResult>(result.Result);
+    }
+    
+    [Fact]
+    public async Task RemoveEmployeeAsync_WhenEmployeeRemovedSuccessfully_ShouldReturnNoContentResult()
+    {
+        // Arrange
+        var companyId = Guid.NewGuid();
+        var employeeId = Guid.NewGuid();
+        
+        // Act
+        var result = await _companyController.RemoveEmployeeAsync(companyId, employeeId);
+        
+        // Assert
+        Assert.IsType<NoContentResult>(result);
+    }
+
+    [Fact]
+    public async Task RemoveEmployeeAsync_WhenEmployeeNotFound_ShouldReturnNotFoundObjectResult()
+    {
+        // Arrange
+        var companyId = Guid.NewGuid();
+        var employeeId = Guid.NewGuid();
+        
+        _companyServiceMock
+            .Setup(x => x.RemoveEmployeeAsync(companyId, employeeId, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(CouldNotFindUser.WithId(employeeId));
+        
+        // Act
+        var result = await _companyController.RemoveEmployeeAsync(companyId, employeeId);
+        
+        // Assert
+        Assert.IsType<NotFoundResult>(result);
+    }
+
+    [Fact]
+    public async Task RemoveEmployeeAsync_WhenCompanyNotFound_ShouldReturnNotFoundObjectResult()
+    {
+        // Arrange
+        var companyId = Guid.NewGuid();
+        var employeeId = Guid.NewGuid();
+        
+        _companyServiceMock
+            .Setup(x => x.RemoveEmployeeAsync(companyId, employeeId, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(CouldNotFindCompany.WithId(companyId));
+        
+        // Act
+        var result = await _companyController.RemoveEmployeeAsync(companyId, employeeId);
+        
+        // Assert
+        Assert.IsType<NotFoundResult>(result);
+    }
+    
+    [Fact]
+    public async Task RemoveEmployeeAsync_WhenDbUpdateConcurrencyException_ShouldReturnConflictObjectResult()
+    {
+        // Arrange
+        var companyId = Guid.NewGuid();
+        var employeeId = Guid.NewGuid();
+        
+        _companyServiceMock
+            .Setup(x => x.RemoveEmployeeAsync(companyId, employeeId, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new DbUpdateConcurrencyException());
+        
+        // Act
+        var result = await _companyController.RemoveEmployeeAsync(companyId, employeeId);
+        
+        // Assert
+        Assert.IsType<ConflictObjectResult>(result);
+    }
+
+    [Fact]
+    public void UpdateEmployeeAsync_ShouldReturnStatusCode405MethodNotAllowed()
+    {
+        // Arrange
+        var companyId = Guid.NewGuid();
+        var employeeId = Guid.NewGuid();
+        var patchDocument = new JsonPatchDocument();
+        
+        // Act
+        var result = _companyController.UpdateEmployeeAsync(companyId, employeeId, patchDocument);
+        
+        // Assert
+        var actualResult = Assert.IsType<StatusCodeResult>(result);
+        Assert.Equal(405, actualResult.StatusCode);
+    }
+
+    [Fact]
+    public void ReplaceEmployeeAsync_ShouldReturnStatusCode405MethodNotAllowed()
+    {
+        // Arrange
+        var companyId = Guid.NewGuid();
+        var employeeId = Guid.NewGuid();
+        
+        // Act
+        var result = _companyController.ReplaceEmployeeAsync(companyId, employeeId);
+        
+        // Assert
+        var actualResult = Assert.IsType<StatusCodeResult>(result);
+        Assert.Equal(405, actualResult.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetEmployeeAsync_WhenEmployeeFound_ShouldReturnEmployee()
+    {
+        // Arrange
+        var companyId = Guid.NewGuid();
+        var employeeId = Guid.NewGuid();
+        
+        _companyServiceMock
+            .Setup(x => x.GetEmployeeAsync(companyId, employeeId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new EmployeeDto() { Name = "name" });
+        
+        // Act
+        var result = await _companyController.GetEmployeeAsync(companyId, employeeId);
+        
+        // Assert
+        Assert.IsType<ActionResult<EmployeeDto>>(result);
+        Assert.NotNull(result.Result);
+        
+        var actualResult = result.Result as OkObjectResult;
+        Assert.NotNull(actualResult);
+        Assert.NotNull(actualResult.Value);
+
+        var value = actualResult.Value as EmployeeDto;
+        Assert.NotNull(value);
+        Assert.Equal("name", value.Name);
+    }
+
+    [Fact]
+    public async Task GetEmployeeAsync_WhenEmployeeNotFound_ShouldReturnNotFoundObjectResult()
+    {
+        // Arrange
+        var companyId = Guid.NewGuid();
+        var employeeId = Guid.NewGuid();
+        
+        _companyServiceMock
+            .Setup(x => x.GetEmployeeAsync(companyId, employeeId, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(CouldNotFindUser.WithId(employeeId));
+        
+        // Act
+        var result = await _companyController.GetEmployeeAsync(companyId, employeeId);
+        
+        // Assert
+        Assert.IsType<NotFoundObjectResult>(result.Result);
+    }
+}

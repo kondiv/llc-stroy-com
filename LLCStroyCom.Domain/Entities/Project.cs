@@ -14,7 +14,7 @@ public class Project
     
     public Status Status { get; set; }
     
-    public Guid CompanyId { get; set; }
+    public Guid CompanyId { get; private set; }
     
     public virtual Company Company { get; set; } = null!;
     

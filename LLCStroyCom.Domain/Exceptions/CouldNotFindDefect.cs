@@ -1,6 +1,6 @@
 ﻿namespace LLCStroyCom.Domain.Exceptions;
 
-public class CouldNotFindDefect : Exception
+public class CouldNotFindDefect : CouldNotFind
 {
     private CouldNotFindDefect(string message)
         : base(message)

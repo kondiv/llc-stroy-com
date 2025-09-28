@@ -1,6 +1,6 @@
 namespace LLCStroyCom.Domain.Exceptions;
 
-public class CouldNotFindProject : Exception
+public class CouldNotFindProject : CouldNotFind
 {
     private CouldNotFindProject(string message)
         : base(message)

@@ -88,10 +88,11 @@ public class CompanyRepositoryTests
         ICompanyRepository companyRepository = new CompanyRepository(context);
         
         // Act
-        await companyRepository.CreateAsync(company);
+        var result = await companyRepository.CreateAsync(company);
         
         // Assert
         Assert.Equal(1, await context.Companies.CountAsync());
+        Assert.NotNull(result);
     }
 
     [Fact]
@@ -159,5 +160,210 @@ public class CompanyRepositoryTests
         
         // Assert
         await Assert.ThrowsAsync<ArgumentNullException>(act);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_WhenCompanyFound_ShouldDeleteCompanyFromDb()
+    {
+        // Arrange
+        var company = new Company()
+        {
+            Id = Guid.NewGuid(),
+            Name = "name"
+        };
+        var context = GetInMemoryDbContext();
+        await context.Companies.AddAsync(company);
+        await context.SaveChangesAsync();
+        
+        ICompanyRepository companyRepository = new CompanyRepository(context);
+        
+        // Act
+        await companyRepository.DeleteAsync(company.Id);
+        
+        // Assert
+        Assert.Equal(0, await context.Companies.CountAsync());
+    }
+
+    [Fact]
+    public async Task DeleteAsync_WhenCompanyNotFound_ShouldThrowCompanyNotFoundException()
+    {
+        // Arrange
+        
+        // Act
+        var act = () => _companyRepository.DeleteAsync(Guid.NewGuid());
+        
+        // Assert
+        await Assert.ThrowsAsync<CouldNotFindCompany>(act);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_WhenOperationCanceled_ShouldThrowOperationCanceledException()
+    {
+        // Arrange
+        var company = new Company()
+        {
+            Id = Guid.NewGuid(),
+            Name = "name"
+        };
+        var cancellationToken = new CancellationToken(canceled: true);
+        var context = GetInMemoryDbContext();
+        
+        await context.Companies.AddAsync(company);
+        await context.SaveChangesAsync();
+        ICompanyRepository companyRepository = new CompanyRepository(context);
+        
+        // Act
+        var act = () => companyRepository.DeleteAsync(company.Id, cancellationToken);
+        
+        // Assert
+        await Assert.ThrowsAsync<TaskCanceledException>(act);
+        Assert.Equal(1, await context.Companies.CountAsync());
+    }
+
+    [Fact]
+    public async Task GetExtendedAsync_WhenCompanyExists_ShouldReturnCompany()
+    {
+        // Arrange
+        var company = new Company()
+        {
+            Id = Guid.NewGuid(),
+            Name = "name",
+            Employees =
+            {
+                new ApplicationUser()
+                {
+                    Email = "email",
+                    HashPassword = "hashPassword",
+                    Name = "name"
+                }
+            },
+            Projects =
+            {
+                new Project()
+                {
+                    City = "city",
+                    Name = "name"
+                }
+            }
+        };
+        
+        var context = GetInMemoryDbContext();
+        await context.Companies.AddAsync(company);
+        await context.SaveChangesAsync();
+        var repository = new CompanyRepository(context);
+        
+        // Act
+        var result = await repository.GetExtendedAsync(company.Id);
+        
+        // Assert
+        Assert.NotNull(result);
+        Assert.NotNull(result.Employees);
+        Assert.NotNull(result.Projects);
+    }
+
+    [Fact]
+    public async Task GetExtendedAsync_WhenCompanyNotFound_ShouldThrowCompanyNotFoundException()
+    {
+        // Arrange
+        // Act
+        var act = () =>  _companyRepository.GetExtendedAsync(Guid.NewGuid());
+        
+        // Assert
+        await Assert.ThrowsAsync<CouldNotFindCompany>(act);
+    }
+
+    [Fact]
+    public async Task GetExtendedAsync_WhenOperationCanceled_ShouldThrowOperationCanceledException()
+    {
+        // Arrange
+        var cancellationToken = new CancellationToken(canceled: true);
+        
+        // Act
+        var act = () => _companyRepository.GetExtendedAsync(Guid.NewGuid(), cancellationToken);
+        
+        // Assert
+        await Assert.ThrowsAsync<OperationCanceledException>(act);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_WhenCompanyNotFound_ShouldThrowDbUpdateException()
+    {
+        // Arrange
+        
+        // Act
+        var act = () => _companyRepository.UpdateAsync(new Company());
+        
+        // Assert
+        await Assert.ThrowsAsync<DbUpdateException>(act);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_WhenCompanyFound_ShouldUpdateCompanyInDb()
+    {
+        // Arrange
+        var companyId = Guid.NewGuid();
+        var company = new Company()
+        {
+            Id = companyId,
+            Name = "name"
+        };
+ 
+        var context = GetInMemoryDbContext();
+        await context.Companies.AddAsync(company);
+        await context.SaveChangesAsync();
+
+        context.Entry(company).State = EntityState.Detached;
+
+        var repository = new CompanyRepository(context);
+
+        var companyToUpdate = new Company()
+        {
+            Id = companyId,
+            Name = "new_name"
+        };
+
+        // Act
+        await repository.UpdateAsync(companyToUpdate);
+    
+        // Assert
+        var updatedCompany = await context.Companies.FindAsync(companyId);
+        Assert.Equal("new_name", updatedCompany.Name);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_WhenTryingToUpdateId_ShouldThrowDbUpdateException()
+    {
+        // Arrange
+        var company = new Company()
+        {
+            Id = Guid.NewGuid(),
+            Name = "name"
+        };
+        
+        var context = GetInMemoryDbContext();
+        await context.Companies.AddAsync(company);
+        await context.SaveChangesAsync();
+        var repository = new CompanyRepository(context);
+        
+        // Act
+        company.Id = Guid.NewGuid();
+        var act = () => _companyRepository.UpdateAsync(company);
+        
+        // Assert
+        await Assert.ThrowsAsync<DbUpdateConcurrencyException>(act);
+        Assert.Equal("name", company.Name);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_WhenOperationCanceled_ShouldThrowOperationCanceledException()
+    {
+        // Arrange
+        var cancellationToken = new CancellationToken(canceled: true);
+        
+        // Act
+        var act = () => _companyRepository.UpdateAsync(new Company(), cancellationToken);
+        
+        // Assert
+        await Assert.ThrowsAsync<TaskCanceledException>(act);
     }
 }

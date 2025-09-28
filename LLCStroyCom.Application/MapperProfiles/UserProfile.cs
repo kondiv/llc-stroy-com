@@ -11,5 +11,8 @@ public class UserProfile : Profile
         CreateMap<ApplicationUser, UserDto>()
             .ForMember(dest => dest.Role, opt => opt.MapFrom(src => src.Role.Type))
             .ForMember(dest => dest.Company, opt => opt.MapFrom(src => src.Company));
+
+        CreateMap<ApplicationUser, ChiefEngineerDto>();
+        CreateMap<ApplicationUser, EmployeeDto>();
     }
 }

@@ -19,7 +19,6 @@ public class MapperTests
             cfg.AddProfile<UserProfile>();
             cfg.AddProfile<CompanyProfile>();
             cfg.AddProfile<ProjectProfile>();
-            cfg.AddProfile<ChiefEngineerProfile>();
         }, loggerFactory);
         
         // Assert

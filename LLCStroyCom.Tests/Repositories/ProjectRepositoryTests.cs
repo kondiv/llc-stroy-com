@@ -45,7 +45,6 @@ public class ProjectRepositoryTests
         {
             Name = "Project1",
             City = "Москва",
-            CompanyId = company1.Id,
             CreatedAt = DateTimeOffset.UtcNow,
             Status = Status.InProgress
         };
@@ -53,7 +52,6 @@ public class ProjectRepositoryTests
         {
             Name = "Project2",
             City = "Москва",
-            CompanyId = company2.Id,
             CreatedAt = DateTimeOffset.UtcNow.AddMinutes(5),
             Status = Status.Canceled
         };
@@ -61,7 +59,6 @@ public class ProjectRepositoryTests
         {
             Name = "Project3",
             City = "НеМосква",
-            CompanyId = company3.Id,
             CreatedAt = DateTimeOffset.UtcNow.AddMinutes(10),
             Status = Status.InProgress
         };
@@ -69,7 +66,6 @@ public class ProjectRepositoryTests
         {
             Name = "Project4",
             City = "НеМосква",
-            CompanyId = company3.Id,
             CreatedAt = DateTimeOffset.UtcNow.AddMinutes(15),
             Status = Status.Completed
         };
@@ -77,7 +73,6 @@ public class ProjectRepositoryTests
         {
             Name = "Project5",
             City = "Москва",
-            CompanyId = company2.Id,
             CreatedAt = DateTimeOffset.UtcNow.AddMinutes(20),
             Status = Status.Completed
         };
@@ -85,7 +80,6 @@ public class ProjectRepositoryTests
         {
             Name = "Project6",
             City = "НеМосква",
-            CompanyId = company1.Id,
             CreatedAt = DateTimeOffset.UtcNow.AddMinutes(25),
             Status = Status.New
         };
@@ -119,7 +113,6 @@ public class ProjectRepositoryTests
         var project = new Project()
         {
             City = "Moscow",
-            CompanyId = Guid.NewGuid(),
             Name = "Жилищный комплекс",
             Status = Status.New
         };
@@ -136,11 +129,10 @@ public class ProjectRepositoryTests
     public async Task CreateAsync_WhenProjectAlreadyExists_ShouldThrowArgumentException()
     {
         // Arrange
-        var companyId = Guid.NewGuid();
         var project = new Project()
         {
             City = "Moscow",
-            CompanyId = companyId,
+ 
             Status = Status.New,
             Name = "Жилой комплекс"
         };
@@ -178,7 +170,6 @@ public class ProjectRepositoryTests
         var project = new Project()
         {
             City = "Moscow",
-            CompanyId = Guid.NewGuid(),
             Status = Status.New,
             Name = "Жилой комплекс"
         };
@@ -196,14 +187,12 @@ public class ProjectRepositoryTests
     {
         // Arrange
         var projectId = Guid.NewGuid();
-        var companyId = Guid.NewGuid();
         var project = new Project()
         {
             Id = projectId,
             City = "Moscow",
             Name = "Жилой комплекс",
             Status = Status.Completed,
-            CompanyId = companyId
         };
 
         var context = GetInMemoryDbContext();
@@ -217,7 +206,6 @@ public class ProjectRepositoryTests
         
         // Assert
         Assert.Equal(projectId, result.Id);
-        Assert.Equal(companyId, result.CompanyId);
         Assert.Equal("Moscow", result.City);
         Assert.Equal("Жилой комплекс", result.Name);
     }
@@ -257,7 +245,6 @@ public class ProjectRepositoryTests
         {
             Id = projectId,
             Status = status,
-            CompanyId = Guid.NewGuid(),
             Name = "георгиевск",
             City = "Москва"
         };
@@ -311,7 +298,6 @@ public class ProjectRepositoryTests
         {
             Id = projectId,
             Status = status,
-            CompanyId = Guid.NewGuid(),
             Name = "георгиевск",
             City = "Москва"
         };

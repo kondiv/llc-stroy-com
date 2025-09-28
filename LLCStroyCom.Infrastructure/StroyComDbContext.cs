@@ -33,6 +33,8 @@ public class StroyComDbContext : DbContext
             
             entity.HasIndex(e => e.Email).IsUnique();
             
+            entity.HasIndex(e => new{e.Id, e.CompanyId}).IsUnique();
+            
             entity.Property(e => e.Id)
                 .HasDefaultValueSql("uuid_generate_v4()")
                 .ValueGeneratedOnAdd()

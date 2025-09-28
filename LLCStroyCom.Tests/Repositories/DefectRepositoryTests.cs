@@ -56,7 +56,6 @@ public class DefectRepositoryTests
         {
             Id = defect.ProjectId,
             City = "Moscow",
-            CompanyId = Guid.NewGuid(),
             CreatedAt = DateTimeOffset.UtcNow,
             Name = "Project",
             Status = Status.InProgress,
@@ -201,7 +200,6 @@ public class DefectRepositoryTests
         {
             Id = defect.ProjectId,
             City = "Moscow",
-            CompanyId = Guid.NewGuid(),
             CreatedAt = DateTimeOffset.UtcNow,
             Name = "Project",
             Status = Status.InProgress,
@@ -265,7 +263,6 @@ public class DefectRepositoryTests
         {
             Id = defect.ProjectId,
             City = "Moscow",
-            CompanyId = Guid.NewGuid(),
             CreatedAt = DateTimeOffset.UtcNow,
             Name = "Project",
             Status = Status.InProgress,
@@ -302,7 +299,6 @@ public class DefectRepositoryTests
         {
             Id = defect.ProjectId,
             City = "Moscow",
-            CompanyId = Guid.NewGuid(),
             CreatedAt = DateTimeOffset.UtcNow,
             Name = "Project",
             Status = Status.InProgress,

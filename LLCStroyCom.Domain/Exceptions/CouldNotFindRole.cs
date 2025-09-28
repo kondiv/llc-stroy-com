@@ -1,6 +1,6 @@
 ﻿namespace LLCStroyCom.Domain.Exceptions;
 
-public class CouldNotFindRole : Exception
+public class CouldNotFindRole : CouldNotFind
 {
     private CouldNotFindRole(string message) : base(message)
     {

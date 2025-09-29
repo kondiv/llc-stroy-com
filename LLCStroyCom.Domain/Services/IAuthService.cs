@@ -1,6 +1,5 @@
-﻿using LLCStroyCom.Domain.Constants;
-using LLCStroyCom.Domain.Dto;
-using LLCStroyCom.Domain.Response;
+﻿using LLCStroyCom.Domain.Dto;
+using LLCStroyCom.Domain.ResultPattern;
 
 namespace LLCStroyCom.Domain.Services;
 

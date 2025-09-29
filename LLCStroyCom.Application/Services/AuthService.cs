@@ -3,7 +3,7 @@ using LLCStroyCom.Domain.Dto;
 using LLCStroyCom.Domain.Entities;
 using LLCStroyCom.Domain.Exceptions;
 using LLCStroyCom.Domain.Repositories;
-using LLCStroyCom.Domain.Response;
+using LLCStroyCom.Domain.ResultPattern;
 using LLCStroyCom.Domain.Services;
 using Microsoft.Extensions.Logging;
 
@@ -44,7 +44,7 @@ public sealed class AuthService : IAuthService
         {
             foreach (var error in validationResult.Errors)
             {
-                _logger.LogWarning($"Invalid credentials' format: {error}");
+                _logger.LogWarning("[{errorCode}] {errorMessage}", error.ErrorCode, error.Message);
             }
             return validationResult;
         }
@@ -70,12 +70,12 @@ public sealed class AuthService : IAuthService
         catch (CouldNotFindRole e)
         {
             _logger.LogError(e, "Role \"{roleName}\" was not found. User was not created", roleName);
-            return Result.Failure(new Error(e.Message, "AuthError"));
+            return Result.Failure(Error.Auth(e.Message));
         }
         catch (ArgumentException e)
         {
             _logger.LogError(e, "User was not created");
-            return Result.Failure(new Error(e.Message, "AuthError"));
+            return Result.Failure(Error.Auth(e.Message));
         }
     }
 
@@ -91,8 +91,7 @@ public sealed class AuthService : IAuthService
             if (!_passwordHasher.VerifyPassword(password, user.HashPassword))
             {
                 _logger.LogWarning("Invalid email or password");
-                return Result<PlainJwtTokensDto>.Failure(
-                    new Error("Invalid email or password", "InvalidCredentials"));
+                return Result<PlainJwtTokensDto>.Failure(Error.Auth("Invalid credentials"));
             }
 
             var tokens = await _tokenService.CreateTokensAsync(user);
@@ -106,7 +105,7 @@ public sealed class AuthService : IAuthService
         catch (CouldNotFindUser e)
         {
             _logger.LogError(e, "User with email \"{email}\" could not be found ", email);
-            return Result<PlainJwtTokensDto>.Failure(new Error(e.Message, "AuthError"));
+            return Result<PlainJwtTokensDto>.Failure(Error.Auth(e.Message));
         }
     }
 
@@ -118,7 +117,7 @@ public sealed class AuthService : IAuthService
         if (!validationResult.IsValid)
         {
             return Result.Failure(validationResult.Errors
-                .Select(vf => new Error(vf.ErrorMessage, vf.ErrorCode))
+                .Select(vf => Error.Validation(vf.ErrorMessage))
                 .ToList());
         }
 

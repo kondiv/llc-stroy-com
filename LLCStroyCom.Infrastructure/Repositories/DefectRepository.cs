@@ -2,7 +2,7 @@
 using LLCStroyCom.Domain.Enums;
 using LLCStroyCom.Domain.Exceptions;
 using LLCStroyCom.Domain.Repositories;
-using LLCStroyCom.Domain.Response;
+using LLCStroyCom.Domain.ResultPattern;
 using Microsoft.EntityFrameworkCore;
 
 namespace LLCStroyCom.Infrastructure.Repositories;

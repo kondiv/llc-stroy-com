@@ -20,11 +20,13 @@ public class ProjectServiceTests
     private readonly IProjectService _projectService;
     private readonly Mock<IPageTokenService> _pageTokenServiceMock;
     private readonly Mock<IProjectRepository> _projectRepositoryMock;
+    private readonly Mock<ICompanyRepository> _companyRepositoryMock;
 
     public ProjectServiceTests()
     {
         _pageTokenServiceMock = new Mock<IPageTokenService>();
         _projectRepositoryMock = new Mock<IProjectRepository>();
+        _companyRepositoryMock = new Mock<ICompanyRepository>();
         var loggerFactory = new LoggerFactory();
         var mapperConfig = new MapperConfiguration(cfg =>
         {
@@ -32,7 +34,9 @@ public class ProjectServiceTests
             cfg.AddProfile<ProjectProfile>();
             cfg.AddProfile<CompanyProfile>();
         }, loggerFactory);
-        _projectService = new ProjectService(_pageTokenServiceMock.Object, _projectRepositoryMock.Object, mapperConfig.CreateMapper());
+        
+        _projectService = new ProjectService(_pageTokenServiceMock.Object, _projectRepositoryMock.Object, _companyRepositoryMock.Object,
+            mapperConfig.CreateMapper());
     }
 
     [Fact]

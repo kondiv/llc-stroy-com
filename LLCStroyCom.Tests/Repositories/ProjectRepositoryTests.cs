@@ -233,88 +233,7 @@ public class ProjectRepositoryTests
         // Assert
         await Assert.ThrowsAsync<OperationCanceledException>(act);
     }
-
-    [Fact]
-    public async Task ChangeStatusAsync_WhenProjectExists_ShouldChangeProjectStatus()
-    {
-        // Arrange
-        var projectId = Guid.NewGuid();
-        var status = Status.InProgress;
-
-        var project = new Project()
-        {
-            Id = projectId,
-            Status = status,
-            Name = "георгиевск",
-            City = "Москва"
-        };
-
-        var context = GetInMemoryDbContext();
-        IProjectRepository projectRepository = new ProjectRepository(context);
-
-        await context.Projects.AddAsync(project);
-        await context.SaveChangesAsync();
-        
-        // Act
-        await projectRepository.ChangeStatusAsync(projectId, Status.OnReview);
-        
-        // Assert
-        Assert.NotEqual(status, project.Status);
-    }
-
-    [Fact]
-    public async Task ChangeStatusAsync_WhenProjectDoesNotExist_ShouldThrowCouldNotFindProject()
-    {
-        // Arrange
-        
-        // Act
-        var act = () => _projectRepository.ChangeStatusAsync(Guid.NewGuid(), Status.InProgress);
-        
-        // Assert
-        await Assert.ThrowsAsync<CouldNotFindProject>(act);
-    }
-
-    [Fact]
-    public async Task ChangeStatusAsync_WhenOperationIsCanceled_ShouldThrowOperationCanceledException()
-    {
-        // Arrange
-        var cancellationToken = new CancellationToken(canceled: true);
-        
-        // Act
-        var act = () => _projectRepository.ChangeStatusAsync(Guid.NewGuid(), Status.Canceled, cancellationToken);
-        
-        // Assert
-        await Assert.ThrowsAsync<OperationCanceledException>(act);
-    }
-
-    [Fact]
-    public async Task ChangeStatusAsync_WhenStatusesAreEqual_ShouldNotUpdateProject()
-    {
-        // Arrange
-        var projectId = Guid.NewGuid();
-        var status = Status.InProgress;
-
-        var project = new Project()
-        {
-            Id = projectId,
-            Status = status,
-            Name = "георгиевск",
-            City = "Москва"
-        };
-
-        var context = GetInMemoryDbContext();
-        IProjectRepository projectRepository = new ProjectRepository(context);
-
-        await context.Projects.AddAsync(project);
-        await context.SaveChangesAsync();
-        
-        // Act
-        await projectRepository.ChangeStatusAsync(projectId, status); // using same status
-        
-        // Assert
-        Assert.Equal(status, project.Status);
-    }
-
+    
     [Fact]
     public async Task ListAsync_WhenEverythingIsAlright_ShouldReturnProjectsList()
     {
@@ -576,6 +495,6 @@ public class ProjectRepositoryTests
         var act = () => projectRepository.ListAsync(specification, cancellationToken);
         
         // Assert
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(act);
+        await Assert.ThrowsAsync<OperationCanceledException>(act);
     }
 }

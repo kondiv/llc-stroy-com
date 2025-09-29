@@ -41,16 +41,4 @@ public sealed class ProjectRepository : IProjectRepository
         
         return await query.ToListAsync(cancellationToken);
     }
-
-    public async Task ChangeStatusAsync(Guid id, Status status, CancellationToken cancellationToken = default)
-    {
-        var project = await GetAsync(id, cancellationToken);
-
-        if (project.Status != status)
-        {
-            project.Status = status;
-        }
-        
-        await _context.SaveChangesAsync(cancellationToken);
-    }
 }

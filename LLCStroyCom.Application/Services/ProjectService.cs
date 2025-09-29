@@ -1,8 +1,10 @@
 ﻿using AutoMapper;
 using LLCStroyCom.Domain.Dto;
+using LLCStroyCom.Domain.Entities;
 using LLCStroyCom.Domain.Models.Filters.Project;
 using LLCStroyCom.Domain.Models.PageTokens;
 using LLCStroyCom.Domain.Repositories;
+using LLCStroyCom.Domain.Requests;
 using LLCStroyCom.Domain.Services;
 using LLCStroyCom.Domain.Specifications.Projects;
 
@@ -12,18 +14,28 @@ public class ProjectService : IProjectService
 {
     private readonly IPageTokenService _pageTokenService;
     private readonly IProjectRepository _projectRepository;
+    private readonly ICompanyRepository _companyRepository;
     private readonly IMapper _mapper;
 
     public ProjectService(
         IPageTokenService pageTokenService,
         IProjectRepository projectRepository,
+        ICompanyRepository companyRepository,
         IMapper mapper)
     {
         _pageTokenService = pageTokenService;
         _projectRepository = projectRepository;
+        _companyRepository = companyRepository;
         _mapper = mapper;
     }
-    
+
+    public async Task<ProjectDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var project = await _projectRepository.GetAsync(id, cancellationToken);
+        
+        return _mapper.Map<ProjectDto>(project);
+    }
+
     public async Task<PaginatedProjectListResponse> ListAsync(string? plainPageToken, ProjectFilter filter, int maxPageSize, 
         CancellationToken cancellationToken = default)
     {
@@ -86,10 +98,8 @@ public class ProjectService : IProjectService
         };
     }
 
-    public async Task<ProjectDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<ProjectDto> CreateAsync(Guid companyId, ProjectCreateRequest request, CancellationToken cancellationToken = default)
     {
-        var project = await _projectRepository.GetAsync(id, cancellationToken);
-        
-        return _mapper.Map<ProjectDto>(project);
+        throw new NotImplementedException();
     }
 }

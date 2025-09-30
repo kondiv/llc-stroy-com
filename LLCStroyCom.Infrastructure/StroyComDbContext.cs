@@ -161,7 +161,8 @@ public class StroyComDbContext : DbContext
             
             entity.Property(e => e.Status)
                 .IsRequired()
-                .HasColumnName("status");
+                .HasColumnName("status")
+                .IsConcurrencyToken();
             
             entity.Property(e => e.CompanyId)
                 .IsRequired()

@@ -3,6 +3,7 @@ using System;
 using LLCStroyCom.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace LLCStroyCom.Infrastructure.Migrations
 {
     [DbContext(typeof(StroyComDbContext))]
-    partial class StroyComDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250930125544_ProjectStatusConcurrencyToken")]
+    partial class ProjectStatusConcurrencyToken
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

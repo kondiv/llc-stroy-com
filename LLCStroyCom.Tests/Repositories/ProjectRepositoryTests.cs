@@ -1,6 +1,5 @@
 ﻿using LLCStroyCom.Domain.Entities;
 using LLCStroyCom.Domain.Enums;
-using LLCStroyCom.Domain.Exceptions;
 using LLCStroyCom.Domain.Models.Filters.Project;
 using LLCStroyCom.Domain.Models.PageTokens;
 using LLCStroyCom.Domain.Repositories;
@@ -497,5 +496,54 @@ public class ProjectRepositoryTests
         
         // Assert
         await Assert.ThrowsAsync<OperationCanceledException>(act);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_WhenUpdateSucceeded_ShouldReturnResultSuccess()
+    {
+        // Arrange
+        var project = new Project()
+        {
+            Id = Guid.NewGuid(),
+            Name = "name",
+            City = "newCity",
+            CompanyId = Guid.NewGuid()
+        };
+
+        var context = GetInMemoryDbContext();
+        var projectRepository = new ProjectRepository(context);
+        await context.Projects.AddAsync(project);
+        await context.SaveChangesAsync();
+        
+        context.Entry(project).State = EntityState.Detached;
+
+        var projectUpdate = new Project()
+        {
+            Id = project.Id,
+            Name = "new-name"
+        };
+        
+        // Act
+        var result = await projectRepository.UpdateAsync(projectUpdate);
+        
+        // Assert
+        Assert.True(result.Succeeded);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_WhenUpdateFailed_ShouldReturnResultFailure()
+    {
+        // Arrange
+        var project = new Project()
+        {
+            Id = Guid.NewGuid(),
+            Name = "name"
+        };
+        
+        // Act
+        var result = await _projectRepository.UpdateAsync(project);
+        
+        // Assert
+        Assert.True(result.IsFailure);
     }
 }

@@ -10,4 +10,5 @@ public interface IProjectRepository
     Task<Result<Project>> GetAsync(Guid id, CancellationToken cancellationToken = default);
     Task<IEnumerable<Project>> ListAsync(ProjectSpecification specification, CancellationToken cancellationToken = default);
     Task<Result> UpdateAsync(Project project, CancellationToken cancellationToken = default);
+    Task<Result> DeleteAsync(Guid id, CancellationToken cancellationToken = default);
 }

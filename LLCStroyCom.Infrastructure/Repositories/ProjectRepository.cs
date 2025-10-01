@@ -61,11 +61,25 @@ public sealed class ProjectRepository : IProjectRepository
         catch (DbUpdateException e)
             when (e.InnerException is NpgsqlException {SqlState: PostgresErrorCodes.UniqueViolation})
         {
-            return Result.Failure(new AlreadyExistsError("Project with such parameters already exists"));
+            return Result.Failure(new AlreadyExistsError("Project with such parameters already exists"), e);
         }
         catch (DbUpdateConcurrencyException e)
         {
-            return Result.Failure(new DbUpdateConcurrencyError("Project has been updated. Request updated project and try again"));
+            return Result.Failure(new DbUpdateConcurrencyError("Project has been updated. Request updated project and try again"), e);
         }
+    }
+
+    public async Task<Result> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var project = await _context.Projects.FindAsync([id], cancellationToken);
+        
+        if (project is null)
+        {
+            return Result.Failure(new NotFoundError("Could not find project"));
+        }
+            
+        _context.Projects.Remove(project);
+        await _context.SaveChangesAsync(cancellationToken);
+        return Result.Success();
     }
 }

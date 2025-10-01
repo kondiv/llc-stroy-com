@@ -45,10 +45,6 @@ public sealed class UserRepository : IUserRepository
 
     public async Task<ApplicationUser> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(email);
-        ArgumentException.ThrowIfNullOrEmpty(email);
-        ArgumentException.ThrowIfNullOrWhiteSpace(email);
-
         return await _context.Users
                    .Include(u => u.Role)
                    .FirstOrDefaultAsync(u => u.Email == email, cancellationToken)

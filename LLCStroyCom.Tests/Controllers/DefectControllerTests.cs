@@ -8,12 +8,12 @@ using Moq;
 
 namespace LLCStroyCom.Tests.Controllers;
 
-public class DefecControllerTests
+public class DefectControllerTests
 {
     private readonly Mock<IDefectService> _defectServiceMock;
     private readonly DefectController _defectController;
     
-    public DefecControllerTests()
+    public DefectControllerTests()
     {
         _defectServiceMock = new Mock<IDefectService>();
         _defectController = new DefectController(_defectServiceMock.Object);
@@ -22,7 +22,7 @@ public class DefecControllerTests
     private static DefectDto GetDefectDto()
     {
         return new DefectDto("Дефект", "Дефект небольшой", Status.InProgress,
-            new ProjectDto("name", "city", Guid.NewGuid(), Status.InProgress, DateTimeOffset.UtcNow), null);
+            new ProjectDto(Guid.NewGuid(), "name", "city", Guid.NewGuid(), Status.InProgress, DateTimeOffset.UtcNow), null);
     }
     
     [Fact]

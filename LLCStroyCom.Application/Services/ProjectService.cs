@@ -1,12 +1,16 @@
 ﻿using AutoMapper;
 using LLCStroyCom.Domain.Dto;
 using LLCStroyCom.Domain.Entities;
+using LLCStroyCom.Domain.Exceptions;
 using LLCStroyCom.Domain.Models.Filters.Project;
 using LLCStroyCom.Domain.Models.PageTokens;
 using LLCStroyCom.Domain.Repositories;
 using LLCStroyCom.Domain.Requests;
+using LLCStroyCom.Domain.ResultPattern;
+using LLCStroyCom.Domain.ResultPattern.Errors;
 using LLCStroyCom.Domain.Services;
 using LLCStroyCom.Domain.Specifications.Projects;
+using Microsoft.AspNetCore.JsonPatch;
 
 namespace LLCStroyCom.Application.Services;
 
@@ -29,11 +33,23 @@ public class ProjectService : IProjectService
         _mapper = mapper;
     }
 
-    public async Task<ProjectDto> GetAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<Result<ProjectDto>> GetAsync(Guid companyId, Guid projectId, CancellationToken cancellationToken = default)
     {
-        var project = await _projectRepository.GetAsync(id, cancellationToken);
+        var projectResult = await _projectRepository.GetAsync(projectId, cancellationToken);
+
+        if (projectResult.IsFailure)
+        {
+            return Result<ProjectDto>.Failure(projectResult.Error, projectResult.InnerException);
+        }
+
+        if (projectResult.Value.CompanyId != companyId)
+        {
+            return Result<ProjectDto>.Failure(new NotFoundError($"Project {projectId} does not exist in company {companyId}"));
+        }
         
-        return _mapper.Map<ProjectDto>(project);
+        var projectDto = _mapper.Map<ProjectDto>(projectResult.Value);
+
+        return Result<ProjectDto>.Success(projectDto);
     }
 
     public async Task<PaginatedProjectListResponse> ListAsync(string? plainPageToken, ProjectFilter filter, int maxPageSize, 
@@ -98,8 +114,53 @@ public class ProjectService : IProjectService
         };
     }
 
-    public async Task<ProjectDto> CreateAsync(Guid companyId, ProjectCreateRequest request, CancellationToken cancellationToken = default)
+    public async Task<Result<ProjectDto>> CreateAsync(Guid companyId, ProjectCreateRequest request, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        try
+        {
+            _ = await _companyRepository.GetAsync(companyId, cancellationToken);
+        }
+        catch (CouldNotFindCompany e)
+        {
+            return Result<ProjectDto>.Failure(new NotFoundError("Company was not found"), e);
+        }
+
+        var project = new Project()
+        {
+            Name = request.Name,
+            City = request.City,
+            CompanyId = companyId,
+        };
+        
+        var result = await _projectRepository.CreateAsync(project, cancellationToken);
+
+        if (result.IsFailure)
+        {
+            return Result<ProjectDto>.Failure(result.Error, result.InnerException);
+        }
+        
+        var projectDto = _mapper.Map<ProjectDto>(result.Value);
+        return Result<ProjectDto>.Success(projectDto);
+    }
+
+    public async Task<Result> UpdateAsync(Guid id, JsonPatchDocument<ProjectPatchDto> patchDocument,
+        CancellationToken cancellationToken = default)
+    {
+        var getProject = await _projectRepository.GetAsync(id, cancellationToken);
+
+        if (getProject.IsFailure)
+        {
+            return Result.Failure(getProject.Error);
+        }
+
+        var existingProject = getProject.Value;
+        
+        var projectDto = _mapper.Map<ProjectPatchDto>(existingProject);
+        
+        patchDocument.ApplyTo(projectDto);
+
+        var project = _mapper.Map(projectDto, existingProject);
+
+        return await _projectRepository.UpdateAsync(project, cancellationToken);
     }
 }

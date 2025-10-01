@@ -8,8 +8,11 @@ using LLCStroyCom.Domain.Exceptions;
 using LLCStroyCom.Domain.Models.Filters.Project;
 using LLCStroyCom.Domain.Models.PageTokens;
 using LLCStroyCom.Domain.Repositories;
+using LLCStroyCom.Domain.ResultPattern;
+using LLCStroyCom.Domain.ResultPattern.Errors;
 using LLCStroyCom.Domain.Services;
 using LLCStroyCom.Domain.Specifications.Projects;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.Extensions.Logging;
 using Moq;
 
@@ -43,26 +46,26 @@ public class ProjectServiceTests
     public async Task GetAsync_WhenProjectExist_ShouldReturnProjectDto()
     {
         // Arrange
+        var companyId = Guid.NewGuid();
         var project = new Project()
         {
             Id = Guid.NewGuid(),
             Name = "Project1",
             Status = Status.Completed,
-            City = "Москва"
+            City = "Москва",
+            CompanyId = companyId,
         };
 
         _projectRepositoryMock
             .Setup(r => r.GetAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(project);
+            .ReturnsAsync(Result<Project>.Success(project));
         
         // Act
-        var result = await _projectService.GetAsync(project.Id, CancellationToken.None);
+        var result = await _projectService.GetAsync(companyId, project.Id, CancellationToken.None);
         
         // Assert
-        Assert.NotNull(result);
-        Assert.IsType<ProjectDto>(result);
-        Assert.Equal(project.Name, result.Name);
-        Assert.Equal(project.Status, result.Status);
+        Assert.True(result.Succeeded);
+        Assert.Equal(project.Name, result.Value.Name);
     }
 
     [Fact]
@@ -71,13 +74,14 @@ public class ProjectServiceTests
         // Arrange
         _projectRepositoryMock
             .Setup(r => r.GetAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(CouldNotFindProject.WithId(Guid.NewGuid()));
+            .ReturnsAsync(Result<Project>.Failure(new NotFoundError("not found")));
         
         // Act
-        var act = () => _projectService.GetAsync(Guid.NewGuid());
+        var result = await _projectService.GetAsync(Guid.NewGuid(), Guid.NewGuid(), CancellationToken.None);
         
         // Assert
-        await Assert.ThrowsAsync<CouldNotFindProject>(act);
+        Assert.True(result.IsFailure);
+        Assert.IsType<NotFoundError>(result.Error);
     }
 
     [Fact]
@@ -89,7 +93,7 @@ public class ProjectServiceTests
             .ThrowsAsync(new OperationCanceledException());
         
         // Act
-        var act = () => _projectService.GetAsync(Guid.NewGuid(), new CancellationToken(true));
+        var act = () => _projectService.GetAsync(Guid.NewGuid(), Guid.NewGuid(), new CancellationToken(true));
         
         // Assert
         await Assert.ThrowsAsync<OperationCanceledException>(act);

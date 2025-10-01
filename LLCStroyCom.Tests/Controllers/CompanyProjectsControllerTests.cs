@@ -6,21 +6,23 @@ using LLCStroyCom.Domain.Exceptions;
 using LLCStroyCom.Domain.Models.Filters.Project;
 using LLCStroyCom.Domain.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Moq;
 
 namespace LLCStroyCom.Tests.Controllers;
 
-public class ProjectControllerTests
+public class CompanyProjectsControllerTests
 {
     private readonly Mock<IProjectService> _projectServiceMock;
-    private readonly ProjectController _controller;
-        
-    public ProjectControllerTests()
+    private readonly CompanyProjectsController _controller;
+
+    public CompanyProjectsControllerTests()
     {
         _projectServiceMock = new Mock<IProjectService>();
-        _controller = new ProjectController(_projectServiceMock.Object);
+        var logger = new Mock<ILogger<CompanyProjectsController>>();
+        _controller = new CompanyProjectsController(_projectServiceMock.Object, logger.Object);
     }
-
+    
     [Fact]
     public async Task ListAsync_WhenSomeProjectsLeft_ShouldReturnOkWithProjectsCollectionAndPageToken()
     {
@@ -33,7 +35,7 @@ public class ProjectControllerTests
                 PageToken = "encoded-page-token",
                 Projects = new List<ProjectDto>()
                 {
-                    new ProjectDto("name", "city", Guid.NewGuid(), Status.Completed, DateTimeOffset.UtcNow)
+                    new ProjectDto(Guid.NewGuid(), "name", "city", Guid.NewGuid(), Status.Completed, DateTimeOffset.UtcNow)
                 }
             });
 
@@ -70,7 +72,7 @@ public class ProjectControllerTests
                 PageToken = null,
                 Projects = new List<ProjectDto>()
                 {
-                    new ProjectDto("name", "city", Guid.NewGuid(), Status.Completed, DateTimeOffset.UtcNow)
+                    new ProjectDto(Guid.NewGuid(),"name", "city", Guid.NewGuid(), Status.Completed, DateTimeOffset.UtcNow)
                 }
             });
         
@@ -155,46 +157,5 @@ public class ProjectControllerTests
         Assert.NotNull(value);
         Assert.Empty(value.Projects);
         Assert.Null(value.PageToken);
-    }
-
-    [Fact]
-    public async Task GetAsync_WhenProjectExists_ShouldReturnOk()
-    {
-        // Arrange
-        _projectServiceMock
-            .Setup(s => s.GetAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ProjectDto("name", "city", Guid.NewGuid(), Status.Completed, DateTimeOffset.UtcNow));
-        
-        // Act
-        var result = await _controller.GetAsync(Guid.NewGuid());
-        
-        // Assert
-        Assert.IsType<ActionResult<ProjectDto>>(result);
-        Assert.NotNull(result.Result);
-        
-        var actualResult = result.Result as OkObjectResult;
-        Assert.NotNull(actualResult);
-        Assert.Equal(200, actualResult.StatusCode);
-        
-        var value = actualResult.Value as ProjectDto;
-        Assert.NotNull(value);
-        Assert.Equal("name", value.Name);
-        Assert.Equal("city", value.City);
-    }
-
-    [Fact]
-    public async Task GetAsync_WhenProjectDoesNotExist_ShouldReturnNotFound()
-    {
-        // Arrange
-        _projectServiceMock
-            .Setup(s => s.GetAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(CouldNotFindProject.WithId(Guid.NewGuid()));
-        
-        // Act
-        var result = await _controller.GetAsync(Guid.NewGuid());
-        
-        // Assert
-        Assert.IsType<ActionResult<ProjectDto>>(result);
-        Assert.IsType<NotFoundObjectResult>(result.Result);
     }
 }

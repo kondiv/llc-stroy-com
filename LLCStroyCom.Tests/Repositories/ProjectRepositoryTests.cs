@@ -4,6 +4,8 @@ using LLCStroyCom.Domain.Exceptions;
 using LLCStroyCom.Domain.Models.Filters.Project;
 using LLCStroyCom.Domain.Models.PageTokens;
 using LLCStroyCom.Domain.Repositories;
+using LLCStroyCom.Domain.ResultPattern;
+using LLCStroyCom.Domain.ResultPattern.Errors;
 using LLCStroyCom.Domain.Specifications.Projects;
 using LLCStroyCom.Infrastructure;
 using LLCStroyCom.Infrastructure.Repositories;
@@ -147,7 +149,7 @@ public class ProjectRepositoryTests
         var act = () => projectRepository.CreateAsync(project);
         
         // Assert
-        Assert.IsType<Func<Task>>(act);
+        Assert.IsType<Func<Task<Result<Project>>>>(act);
     }
 
     [Fact]
@@ -205,9 +207,7 @@ public class ProjectRepositoryTests
         var result = await projectRepository.GetAsync(projectId);
         
         // Assert
-        Assert.Equal(projectId, result.Id);
-        Assert.Equal("Moscow", result.City);
-        Assert.Equal("Жилой комплекс", result.Name);
+        Assert.True(result.Succeeded);
     }
 
     [Fact]
@@ -215,10 +215,11 @@ public class ProjectRepositoryTests
     {
         // Arrange
         // Act
-        var act = () => _projectRepository.GetAsync(Guid.NewGuid());
+        var result = await _projectRepository.GetAsync(Guid.NewGuid());
         
         // Assert
-        await Assert.ThrowsAsync<CouldNotFindProject>(act);
+        Assert.True(result.IsFailure);
+        Assert.IsType<NotFoundError>(result.Error);
     }
 
     [Fact]

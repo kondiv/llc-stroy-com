@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Text;
 using LLCStroyCom.Application.MapperProfiles;
 using LLCStroyCom.Application.Services;
@@ -11,6 +12,7 @@ using LLCStroyCom.Infrastructure.Seeders;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -105,14 +107,74 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddControllers().AddNewtonsoftJson();
 builder.Services.AddOpenApi();
-builder.Services.AddSwaggerGen().AddSwaggerGenNewtonsoftSupport();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo 
+    { 
+        Title = "LLCStroyCom API", 
+        Version = "v1",
+        Description = "API for LLCStroyCom management system"
+    });
+    
+    // Добавление поддержки JWT в Swagger
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description = @"JWT Authorization header using the Bearer scheme. 
+                      Example: 'Bearer {token}'
+                      Token can be passed in:
+                      - Authorization header
+                      - access_token cookie",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
+    });
+    
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                },
+                Scheme = "oauth2",
+                Name = "Bearer",
+                In = ParameterLocation.Header,
+            },
+            new List<string>()
+        }
+    });
+    
+    // Включение XML комментариев (опционально, но рекомендуется)
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    if (File.Exists(xmlPath))
+    {
+        options.IncludeXmlComments(xmlPath);
+    }
+}).AddSwaggerGenNewtonsoftSupport();
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 
 app.UseSwagger();
-app.UseSwaggerUI();
+app.UseSwaggerUI(options =>
+{
+    options.SwaggerEndpoint("/swagger/v1/swagger.json", "LLCStroyCom API V1");
+    options.RoutePrefix = "swagger"; // Доступ по /swagger
+    options.OAuthClientId("swagger-ui");
+    options.OAuthAppName("LLCStroyCom API - Swagger");
+    options.OAuthUsePkce();
+    
+    // Дополнительные настройки для удобства
+    options.DisplayRequestDuration();
+    options.EnableDeepLinking();
+    options.EnableFilter();
+});
 
 
 using (var scope = app.Services.CreateScope())

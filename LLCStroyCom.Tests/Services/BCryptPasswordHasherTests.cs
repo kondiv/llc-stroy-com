@@ -1,4 +1,5 @@
-﻿using LLCStroyCom.Application.Services;
+﻿using System.Diagnostics;
+using LLCStroyCom.Application.Services;
 using LLCStroyCom.Domain.Services;
 
 namespace LLCStroyCom.Tests.Services;
@@ -11,7 +12,45 @@ public class BCryptPasswordHasherTests
     {
         _passwordHasher = new BCryptPasswordHasher();
     }
+    
+    [Fact]
+    public void HashPassword_ShouldMeasurePerformance()
+    {
+        // Arrange
+        var password = "TestPassword123!";
+        var iterations = 5;
+        var executionTimes = new List<long>();
 
+        // Act & Measure
+        for (int i = 0; i < iterations; i++)
+        {
+            var stopwatch = Stopwatch.StartNew();
+            var hashedPassword = _passwordHasher.HashPassword(password);
+            stopwatch.Stop();
+                
+            executionTimes.Add(stopwatch.ElapsedMilliseconds);
+                
+            // Basic validation
+            Assert.NotNull(hashedPassword);
+            Assert.NotEmpty(hashedPassword);
+        }
+
+        // Assert & Report
+        var averageTime = executionTimes.Average();
+        var minTime = executionTimes.Min();
+        var maxTime = executionTimes.Max();
+
+        Console.WriteLine($"=== Password Hashing Performance ===");
+        Console.WriteLine($"Iterations: {iterations}");
+        Console.WriteLine($"Average time: {averageTime:F2}ms");
+        Console.WriteLine($"Min time: {minTime}ms");
+        Console.WriteLine($"Max time: {maxTime}ms");
+        Console.WriteLine($"All times: {string.Join("ms, ", executionTimes)}ms");
+            
+        // Performance assertion (adjust based on your expectations)
+        Assert.True(averageTime < 100, $"Average time {averageTime}ms should be less than 100ms");
+    }
+    
     [Fact]
     public void HashPassword_WhenPasswordIsNull_ShouldThrowArgumentNullException()
     {

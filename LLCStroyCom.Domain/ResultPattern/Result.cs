@@ -1,12 +1,14 @@
-﻿namespace LLCStroyCom.Domain.ResultPattern;
+﻿using LLCStroyCom.Domain.ResultPattern.Errors;
+
+namespace LLCStroyCom.Domain.ResultPattern;
 
 public class Result
 {
-    private readonly List<Error> _errors;
-
     private readonly Exception? _innerException;
+    private readonly Error? _error;
 
-    public IReadOnlyList<Error> Errors => _errors;
+    public Error Error =>
+        IsFailure ? _error! : throw new InvalidOperationException("Cannot access Error in ResultSuccess");
 
     public Exception InnerException => IsFailure
         ? _innerException!
@@ -16,43 +18,30 @@ public class Result
     
     public bool IsFailure => !Succeeded;
 
-    protected Result(bool succeeded, IEnumerable<Error> errors)
+    protected Result(bool succeeded, Error? error)
     {
-        var errorList = errors.ToList();
-
-        switch (succeeded)
+        if (!succeeded && error is null)
         {
-            case false when errorList.Count == 0:
-                throw new ArgumentException("Cannot create Failure Result without errors");
-            case true when errorList.Count > 0:
-                throw new ArgumentException("Cannot create Success Result with errors");
+            throw new ArgumentException("Cannot create Result Failure without Error");
         }
 
         Succeeded = succeeded;
-        _errors = errorList;
+        _error = error;
     }
 
-    protected Result(bool succeeded, IEnumerable<Error> errors, Exception? innerException)
+    protected Result(bool succeeded, Error? error, Exception? innerException)
     {
-        var errorList = errors.ToList();
-
-        switch (succeeded)
+        if (!succeeded && error is null && innerException is null)
         {
-            case false when errorList.Count == 0:
-                throw new ArgumentException("Cannot create Failure Result without errors");
-            case true when errorList.Count > 0:
-                throw new ArgumentException("Cannot create Success Result with errors");
-            case true when innerException is not null:
-                throw new ArgumentException("Cannot create Success Result with Inner Exception");
+            throw new ArgumentException("Cannot create Result Failure without Error or Exception");
         }
 
         Succeeded = succeeded;
-        _errors = errorList;
+        _error = error;
         _innerException = innerException;
     }
 
-    public static Result Success() => new Result(true, []);
-    public static Result Failure(IEnumerable<Error> errors) => new Result(false, errors);
-    public static Result Failure(Error error) => new Result(false, [error]);
-    public static Result Failure(IEnumerable<Error> errors, Exception innerException) => new Result(false, errors, innerException);
+    public static Result Success() => new Result(true, null);
+    public static Result Failure(Error error) => new Result(false, error);
+    public static Result Failure(Error error, Exception innerException) => new Result(false, error, innerException);
 }

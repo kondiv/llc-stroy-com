@@ -57,7 +57,6 @@ public class AuthServiceTests
 
         // Assert
         Assert.True(result.Succeeded);
-        Assert.Empty(result.Errors);
     }
 
     [Fact]
@@ -74,7 +73,6 @@ public class AuthServiceTests
 
         // Assert
         Assert.False(result.Succeeded);
-        Assert.Single(result.Errors);
     }
 
     [Fact]
@@ -91,7 +89,6 @@ public class AuthServiceTests
 
         // Assert
         Assert.False(result.Succeeded);
-        Assert.Single(result.Errors);
     }
 
     [Fact]
@@ -112,7 +109,6 @@ public class AuthServiceTests
 
         // Assert
         Assert.False(result.Succeeded);
-        Assert.Single(result.Errors);
     }
 
     [Fact]
@@ -133,7 +129,6 @@ public class AuthServiceTests
 
         // Assert
         Assert.False(result.Succeeded);
-        Assert.Single(result.Errors);
     }
 
     [Fact]
@@ -154,7 +149,6 @@ public class AuthServiceTests
 
         // Assert
         Assert.False(result.Succeeded);
-        Assert.Single(result.Errors);
     }
 
     [Fact]
@@ -179,7 +173,6 @@ public class AuthServiceTests
 
         // Assert
         Assert.False(result.Succeeded);
-        Assert.Single(result.Errors);
     }
 
     [Fact]

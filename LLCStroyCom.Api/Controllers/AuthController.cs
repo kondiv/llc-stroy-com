@@ -41,7 +41,7 @@ public class AuthController : ControllerBase
 
         if (!authenticationResult.Succeeded)
         {
-            return BadRequest(authenticationResult.Errors);
+            return BadRequest(authenticationResult.Error);
         }
 
         return Created();
@@ -61,7 +61,7 @@ public class AuthController : ControllerBase
         
         if (!authenticationResult.Succeeded)
         {
-            return BadRequest(authenticationResult.Errors);
+            return BadRequest(authenticationResult.Error);
         }
 
         return Created();
@@ -81,7 +81,7 @@ public class AuthController : ControllerBase
         
         if(!authenticationResult.Succeeded)
         {
-            return BadRequest(authenticationResult.Errors);
+            return BadRequest(authenticationResult.Error);
         }
 
         return Created();
@@ -100,7 +100,7 @@ public class AuthController : ControllerBase
 
         if (!authenticationResult.Succeeded)
         {
-            return BadRequest(authenticationResult.Errors);
+            return BadRequest(authenticationResult.Error);
         }
 
         if (authenticationResult.Value is null)

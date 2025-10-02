@@ -228,7 +228,7 @@ public class UserRepositoryTests
     }
 
     [Fact]
-    public async Task GetByEmailAsync_WhenEmailIsNull_ShouldThrowArgumentNullException()
+    public async Task GetByEmailAsync_WhenEmailIsNull_ShouldThrowCouldNotFindUser()
     {
         // Arrange
         var context = GetInMemoryDbContext();
@@ -239,11 +239,11 @@ public class UserRepositoryTests
         var act = () => userRepository.GetByEmailAsync(email!);
         
         // Assert
-        await Assert.ThrowsAsync<ArgumentNullException>(act);
+        await Assert.ThrowsAsync<CouldNotFindUser>(act);
     }
 
     [Fact]
-    public async Task GetByEmailAsync_WhenEmailIsEmpty_ShouldThrowArgumentException()
+    public async Task GetByEmailAsync_WhenEmailIsEmpty_ShouldThrowCouldNotFindUser()
     {
         // Arrange
         var context = GetInMemoryDbContext();
@@ -254,11 +254,11 @@ public class UserRepositoryTests
         var act = () => userRepository.GetByEmailAsync(email);
         
         // Assert
-        await Assert.ThrowsAsync<ArgumentException>(act);
+        await Assert.ThrowsAsync<CouldNotFindUser>(act);
     }
 
     [Fact]
-    public async Task GetByEmailAsync_WhenEmailIsWhitespace_ShouldThrowArgumentException()
+    public async Task GetByEmailAsync_WhenEmailIsWhitespace_ShouldThrowCouldNotFindUser()
     {
         // Arrange
         var context = GetInMemoryDbContext();
@@ -269,7 +269,7 @@ public class UserRepositoryTests
         var act = () => userRepository.GetByEmailAsync(email);
         
         // Assert
-        await Assert.ThrowsAsync<ArgumentException>(act);
+        await Assert.ThrowsAsync<CouldNotFindUser>(act);
     }
 
     [Fact]

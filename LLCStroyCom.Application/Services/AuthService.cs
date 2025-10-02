@@ -4,6 +4,7 @@ using LLCStroyCom.Domain.Entities;
 using LLCStroyCom.Domain.Exceptions;
 using LLCStroyCom.Domain.Repositories;
 using LLCStroyCom.Domain.ResultPattern;
+using LLCStroyCom.Domain.ResultPattern.Errors;
 using LLCStroyCom.Domain.Services;
 using Microsoft.Extensions.Logging;
 
@@ -42,10 +43,8 @@ public sealed class AuthService : IAuthService
         var validationResult = await ValidateAuthenticationDataAsync(email, password);
         if (!validationResult.Succeeded)
         {
-            foreach (var error in validationResult.Errors)
-            {
-                _logger.LogWarning("[{errorCode}] {errorMessage}", error.ErrorCode, error.Message);
-            }
+            var error = validationResult.Error;
+            _logger.LogWarning("[{errorCode}] {errorMessage}", error.ErrorCode, error.Message);
             return validationResult;
         }
 
@@ -69,13 +68,13 @@ public sealed class AuthService : IAuthService
         }
         catch (CouldNotFindRole e)
         {
-            _logger.LogError(e, "Role \"{roleName}\" was not found. User was not created", roleName);
-            return Result.Failure(Error.Auth(e.Message));
+            _logger.LogCritical(e, "Role \"{roleName}\" was not found. User was not created", roleName);
+            return Result.Failure(new NotFoundError("Could not find role"));
         }
         catch (ArgumentException e)
         {
             _logger.LogError(e, "User was not created");
-            return Result.Failure(Error.Auth(e.Message));
+            return Result.Failure(new AuthError(e.Message));
         }
     }
 
@@ -91,7 +90,7 @@ public sealed class AuthService : IAuthService
             if (!_passwordHasher.VerifyPassword(password, user.HashPassword))
             {
                 _logger.LogWarning("Invalid email or password");
-                return Result<PlainJwtTokensDto>.Failure(Error.Auth("Invalid credentials"));
+                return Result<PlainJwtTokensDto>.Failure(new AuthError("Invalid credentials"));
             }
 
             var tokens = await _tokenService.CreateTokensAsync(user);
@@ -105,7 +104,7 @@ public sealed class AuthService : IAuthService
         catch (CouldNotFindUser e)
         {
             _logger.LogError(e, "User with email \"{email}\" could not be found ", email);
-            return Result<PlainJwtTokensDto>.Failure(Error.Auth(e.Message));
+            return Result<PlainJwtTokensDto>.Failure(new AuthError("Invalid credentials"));
         }
     }
 
@@ -114,13 +113,9 @@ public sealed class AuthService : IAuthService
         var validationResult = await _authenticationDataValidator.ValidateAsync(
             new RegistrationDataValidationDto(email, password));
 
-        if (!validationResult.IsValid)
-        {
-            return Result.Failure(validationResult.Errors
-                .Select(vf => Error.Validation(vf.ErrorMessage))
-                .ToList());
-        }
-
-        return Result.Success();
+        if (validationResult.IsValid) return Result.Success();
+        
+        var validationError = validationResult.Errors[0];
+        return Result.Failure(new ValidationError(validationError.ErrorMessage));
     }
 }

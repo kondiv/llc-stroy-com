@@ -4,6 +4,7 @@ using LLCStroyCom.Domain.Configs;
 using LLCStroyCom.Domain.Dto;
 using LLCStroyCom.Domain.Exceptions;
 using LLCStroyCom.Domain.ResultPattern;
+using LLCStroyCom.Domain.ResultPattern.Errors;
 using LLCStroyCom.Domain.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -84,7 +85,7 @@ public class AuthControllerTests
         _authServiceMock
             .Setup(s => s.RegisterAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
                 CancellationToken.None))
-            .ReturnsAsync(Result.Failure([Error.Auth("auth")]));
+            .ReturnsAsync(Result.Failure(new AuthError("error")));
         
         // Act
         var actionResult = await _authController.RegisterEngineerAsync(authenticationRequest, CancellationToken.None);
@@ -168,7 +169,7 @@ public class AuthControllerTests
         _authServiceMock
             .Setup(s => s.RegisterAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
                 CancellationToken.None))
-            .ReturnsAsync(Result.Failure([Error.Auth("auth")]));
+            .ReturnsAsync(Result.Failure(new AuthError("error")));
         
         // Act
         var actionResult = await _authController.RegisterManagerAsync(authenticationRequest, CancellationToken.None);
@@ -214,7 +215,7 @@ public class AuthControllerTests
         _authServiceMock
             .Setup(s => s.RegisterAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
                 CancellationToken.None))
-            .ReturnsAsync(Result.Failure([Error.Auth("auth")]));
+            .ReturnsAsync(Result.Failure(new AuthError("error")));
         
         // Act
         var actionResult = await _authController.RegisterObserverAsync(authenticationRequest, CancellationToken.None);
@@ -243,7 +244,7 @@ public class AuthControllerTests
         // Arrange
         var request = new LoginRequest() { Email = "test@email.com", Password = "123456" };
 
-        var failedResult = Result<PlainJwtTokensDto>.Failure([Error.Auth("auth")]);
+        var failedResult = Result<PlainJwtTokensDto>.Failure(new AuthError("error"));
 
         _authServiceMock
             .Setup(s => s.LoginAsync(request.Email, request.Password, It.IsAny<CancellationToken>()))

@@ -151,7 +151,7 @@ public class StroyComDbContext : DbContext
             
             entity.Property(e => e.City)
                 .IsRequired()
-                .HasMaxLength(100)
+                .HasMaxLength(180)
                 .HasColumnName("city");
             
             entity.Property(e => e.CreatedAt)
@@ -161,7 +161,8 @@ public class StroyComDbContext : DbContext
             
             entity.Property(e => e.Status)
                 .IsRequired()
-                .HasColumnName("status");
+                .HasColumnName("status")
+                .IsConcurrencyToken();
             
             entity.Property(e => e.CompanyId)
                 .IsRequired()

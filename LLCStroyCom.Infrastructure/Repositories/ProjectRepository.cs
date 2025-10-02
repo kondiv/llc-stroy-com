@@ -1,11 +1,11 @@
 ﻿using Ardalis.Specification.EntityFrameworkCore;
 using LLCStroyCom.Domain.Entities;
-using LLCStroyCom.Domain.Enums;
-using LLCStroyCom.Domain.Exceptions;
-using LLCStroyCom.Domain.Models.PageTokens;
 using LLCStroyCom.Domain.Repositories;
+using LLCStroyCom.Domain.ResultPattern;
+using LLCStroyCom.Domain.ResultPattern.Errors;
 using LLCStroyCom.Domain.Specifications.Projects;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace LLCStroyCom.Infrastructure.Repositories;
 
@@ -18,19 +18,27 @@ public sealed class ProjectRepository : IProjectRepository
         _context = context;
     }
     
-    public async Task CreateAsync(Project project, CancellationToken cancellationToken = default)
+    public async Task<Result<Project>> CreateAsync(Project project, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(project);
-        
-        await _context.Projects.AddAsync(project, cancellationToken); 
-        await _context.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await _context.Projects.AddAsync(project, cancellationToken); 
+            await _context.SaveChangesAsync(cancellationToken);
+            return Result<Project>.Success(project);
+        }
+        catch (DbUpdateException ex) 
+            when (ex.InnerException is NpgsqlException {SqlState: PostgresErrorCodes.UniqueViolation})
+        {
+            return Result<Project>.Failure(new AlreadyExistsError("Project already exists"));
+        }
     }
 
-    public async Task<Project> GetAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<Result<Project>> GetAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var project = await _context.Projects.FindAsync([id], cancellationToken);
-        
-        return project ?? throw CouldNotFindProject.WithId(id);
+
+        return project is null ? Result<Project>.Failure(new NotFoundError("Cannot find project: " + id))
+            : Result<Project>.Success(project);
     }
 
     public async Task<IEnumerable<Project>> ListAsync(ProjectSpecification specification, CancellationToken cancellationToken = default)
@@ -42,15 +50,36 @@ public sealed class ProjectRepository : IProjectRepository
         return await query.ToListAsync(cancellationToken);
     }
 
-    public async Task ChangeStatusAsync(Guid id, Status status, CancellationToken cancellationToken = default)
+    public async Task<Result> UpdateAsync(Project project, CancellationToken cancellationToken = default)
     {
-        var project = await GetAsync(id, cancellationToken);
-
-        if (project.Status != status)
+        try
         {
-            project.Status = status;
+            _context.Projects.Update(project);
+            await _context.SaveChangesAsync(cancellationToken);
+            return Result.Success();
         }
+        catch (DbUpdateException e)
+            when (e.InnerException is NpgsqlException {SqlState: PostgresErrorCodes.UniqueViolation})
+        {
+            return Result.Failure(new AlreadyExistsError("Project with such parameters already exists"), e);
+        }
+        catch (DbUpdateConcurrencyException e)
+        {
+            return Result.Failure(new DbUpdateConcurrencyError("Project has been updated. Request updated project and try again"), e);
+        }
+    }
+
+    public async Task<Result> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var project = await _context.Projects.FindAsync([id], cancellationToken);
         
+        if (project is null)
+        {
+            return Result.Failure(new NotFoundError("Could not find project"));
+        }
+            
+        _context.Projects.Remove(project);
         await _context.SaveChangesAsync(cancellationToken);
+        return Result.Success();
     }
 }

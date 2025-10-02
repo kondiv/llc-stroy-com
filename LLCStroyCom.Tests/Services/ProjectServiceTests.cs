@@ -12,7 +12,7 @@ using LLCStroyCom.Domain.ResultPattern;
 using LLCStroyCom.Domain.ResultPattern.Errors;
 using LLCStroyCom.Domain.Services;
 using LLCStroyCom.Domain.Specifications.Projects;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.Extensions.Logging;
 using Moq;
 
@@ -236,7 +236,7 @@ public class ProjectServiceTests
         
         _pageTokenServiceMock
             .Setup(s => s.Decode<ProjectPageToken>(invalidPageToken))
-            .Throws(PageTokenDecodingException.ForToken(typeof(ProjectPageToken).Name));
+            .Throws(PageTokenDecodingException.ForToken(nameof(ProjectPageToken)));
         
         // Act
         var act = () => _projectService.ListAsync(invalidPageToken, projectFilter, maxPageSize);
@@ -258,12 +258,170 @@ public class ProjectServiceTests
         
         _pageTokenServiceMock
             .Setup(s => s.Encode(It.IsAny<ProjectPageToken>()))
-            .Throws(PageTokenEncodingException.ForToken(typeof(ProjectPageToken).Name));
+            .Throws(PageTokenEncodingException.ForToken(nameof(ProjectPageToken)));
         
         // Act
         var act = () => _projectService.ListAsync(null, projectFilter, maxPageSize);
         
         // Assert
         await Assert.ThrowsAsync<PageTokenEncodingException>(act);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_WhenUpdateSucceeded_ShouldReturnResultSuccess()
+    {
+        // Arrange
+        var companyId = Guid.NewGuid();
+        
+        _projectRepositoryMock
+            .Setup(x => x.GetAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result<Project>.Success(new Project(){ CompanyId = companyId }));
+
+        _projectRepositoryMock
+            .Setup(x => x.UpdateAsync(It.IsAny<Project>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Success());
+
+        var jsonPatchDocument = new JsonPatchDocument<ProjectPatchDto>();
+        var projectId = Guid.NewGuid();
+        
+        // Act
+        var result = await _projectService.UpdateAsync(companyId, projectId, jsonPatchDocument);
+        
+        // Assert
+        Assert.True(result.Succeeded);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_WhenProjectNotFound_ShouldReturnFailedResult()
+    {
+        // Arrange
+        _projectRepositoryMock
+            .Setup(x => x.GetAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result<Project>.Failure(new NotFoundError("")));
+        
+        var jsonPatchDocument = new JsonPatchDocument<ProjectPatchDto>();
+        
+        // Act
+        var result = await _projectService.UpdateAsync(Guid.NewGuid(), Guid.NewGuid(), jsonPatchDocument);
+        
+        // Assert
+        Assert.False(result.Succeeded);
+        Assert.IsType<NotFoundError>(result.Error);
+        _projectRepositoryMock
+            .Verify(x => x.UpdateAsync(It.IsAny<Project>(), It.IsAny<CancellationToken>()),
+                Times.Never);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_WhenUpdateFailed_ShouldReturnFailedResult()
+    {
+        // Arrange
+        var companyId = Guid.NewGuid();
+        
+        _projectRepositoryMock
+            .Setup(x => x.GetAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result<Project>.Success(new Project(){ CompanyId = companyId}));
+
+        _projectRepositoryMock
+            .Setup(x => x.UpdateAsync(It.IsAny<Project>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Failure(new DbUpdateConcurrencyError("")));
+
+        var jsonPatchDocument = new JsonPatchDocument<ProjectPatchDto>();
+        
+        // Act
+        var result = await _projectService.UpdateAsync(companyId, Guid.NewGuid(), jsonPatchDocument);
+        
+        // Assert
+        Assert.True(result.IsFailure);
+        Assert.IsType<DbUpdateConcurrencyError>(result.Error);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_WhenProjectDoesNotBelongToCompany_ShouldReturnFailedResult()
+    {
+        // Arrange
+        _projectRepositoryMock
+            .Setup(x => x.GetAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result<Project>.Success(new Project()));
+        
+        var jsonPatchDocument = new JsonPatchDocument<ProjectPatchDto>();
+        
+        // Act
+        var result = await _projectService.UpdateAsync(Guid.NewGuid(), Guid.NewGuid(), jsonPatchDocument);
+        
+        // Assert
+        Assert.True(result.IsFailure);
+        Assert.IsType<NotFoundError>(result.Error);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_WhenOperationCanceled_ShouldThrowOperationCanceledException()
+    {
+        // Arrange
+        var cancellationToken = new CancellationToken(canceled: true);
+        var jsonPatchDocument = new JsonPatchDocument<ProjectPatchDto>();
+        
+        _projectRepositoryMock
+            .Setup(x => x.GetAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new TaskCanceledException());
+        
+        // Act
+        var act = () => _projectService.UpdateAsync(Guid.NewGuid(), Guid.NewGuid(), jsonPatchDocument, cancellationToken);
+        
+        // Assert
+        await Assert.ThrowsAsync<TaskCanceledException>(act);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_WhenDeleteSucceeded_ShouldReturnResultSuccess()
+    {
+        // Arrange
+        var companyId = Guid.NewGuid();
+
+        _projectRepositoryMock
+            .Setup(x => x.GetAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result<Project>.Success(new Project() { CompanyId = companyId }));
+        
+        _projectRepositoryMock
+            .Setup(x => x.DeleteAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Success());
+        
+        // Act
+        var result = await _projectService.DeleteAsync(companyId, Guid.NewGuid());
+        
+        // Assert
+        Assert.True(result.Succeeded);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_WhenProjectDoesNotBelongToCompany_ShouldReturnFailedResult()
+    {
+        // Arrange
+        _projectRepositoryMock
+            .Setup(x => x.GetAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result<Project>.Success(new Project()));
+        
+        // Act
+        var result = await _projectService.DeleteAsync(Guid.NewGuid(), Guid.NewGuid());
+        
+        // Assert
+        Assert.True(result.IsFailure);
+        Assert.IsType<NotFoundError>(result.Error);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_WhenProjectNotFound_ShouldReturnFailedResult()
+    {
+        // Arrange
+        _projectRepositoryMock
+            .Setup(x => x.GetAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result<Project>.Failure(new NotFoundError("NotFoundError")));
+        
+        // Act
+        var result = await _projectService.DeleteAsync(Guid.NewGuid(), Guid.NewGuid());
+        
+        // Assert
+        Assert.True(result.IsFailure);
+        Assert.IsType<NotFoundError>(result.Error);
     }
 }

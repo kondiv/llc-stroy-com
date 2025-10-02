@@ -143,10 +143,10 @@ public class ProjectService : IProjectService
         return Result<ProjectDto>.Success(projectDto);
     }
 
-    public async Task<Result> UpdateAsync(Guid id, JsonPatchDocument<ProjectPatchDto> patchDocument,
+    public async Task<Result> UpdateAsync(Guid companyId, Guid projectId, JsonPatchDocument<ProjectPatchDto> patchDocument,
         CancellationToken cancellationToken = default)
     {
-        var getProject = await _projectRepository.GetAsync(id, cancellationToken);
+        var getProject = await _projectRepository.GetAsync(projectId, cancellationToken);
 
         if (getProject.IsFailure)
         {
@@ -154,6 +154,11 @@ public class ProjectService : IProjectService
         }
 
         var existingProject = getProject.Value;
+
+        if (!BelongsToCompany(existingProject, companyId))
+        {
+            return Result.Failure(new NotFoundError($"Cannot find project {projectId} in company {companyId}"));
+        }
         
         var projectDto = _mapper.Map<ProjectPatchDto>(existingProject);
         
@@ -162,5 +167,31 @@ public class ProjectService : IProjectService
         var project = _mapper.Map(projectDto, existingProject);
 
         return await _projectRepository.UpdateAsync(project, cancellationToken);
+    }
+
+    public async Task<Result> DeleteAsync(Guid companyId, Guid projectId, CancellationToken cancellationToken = default)
+    {
+        if (!await BelongsToCompanyAsync(projectId, companyId, cancellationToken))
+        {
+            return Result.Failure(new NotFoundError($"Cannot find project {projectId} in company {companyId}"));
+        }
+        
+        return await _projectRepository.DeleteAsync(projectId, cancellationToken);
+    }
+
+    private async Task<bool> BelongsToCompanyAsync(Guid projectId, Guid companyId, CancellationToken cancellationToken = default)
+    {
+        var getProjectResult = await _projectRepository.GetAsync(projectId, cancellationToken);
+
+        if (getProjectResult.IsFailure)
+        {
+            return false;
+        }
+
+        return getProjectResult.Value.CompanyId == companyId;
+    }
+    private bool BelongsToCompany(Project project, Guid companyId)
+    {
+        return project.CompanyId == companyId;
     }
 }

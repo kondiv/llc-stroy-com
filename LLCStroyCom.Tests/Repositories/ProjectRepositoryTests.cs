@@ -546,4 +546,70 @@ public class ProjectRepositoryTests
         // Assert
         Assert.True(result.IsFailure);
     }
+
+    [Fact]
+    public async Task UpdateAsync_WhenOperationCanceled_ShouldThrowOperationCanceledException()
+    {
+        // Arrange
+        var cancellationToken = new CancellationToken(canceled: true);
+        
+        // Act
+        var act = () => _projectRepository.UpdateAsync(new Project(), cancellationToken);
+        
+        // Assert
+        await Assert.ThrowsAsync<TaskCanceledException>(act);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_WhenDeletedSuccessfully_ShouldReturnResultSuccess()
+    {
+        // Arrange
+        var projectId = Guid.NewGuid();
+        var project = new Project()
+        {
+            Id = projectId,
+            Name = "name",
+            City = "city",
+            CompanyId = Guid.NewGuid()
+        };
+        
+        var context = GetInMemoryDbContext();
+        await context.Projects.AddAsync(project);
+        await context.SaveChangesAsync();
+
+        var repository = new ProjectRepository(context);
+        
+        // Act
+        var result = await repository.DeleteAsync(projectId);
+        
+        // Assert
+        Assert.True(result.Succeeded);
+        Assert.Equal(0, await context.Projects.CountAsync());
+    }
+
+    [Fact]
+    public async Task DeleteAsync_WhenOperationCanceled_ShouldThrowOperationCanceledException()
+    {
+        // Arrange
+        var cancellationToken = new CancellationToken(canceled: true);
+        
+        // Act
+        var act = () => _projectRepository.DeleteAsync(Guid.NewGuid(), cancellationToken);
+        
+        // Assert
+        await Assert.ThrowsAsync<OperationCanceledException>(act);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_WhenProjectNotFound_ShouldReturnResultFailure()
+    {
+        // Arrange
+        
+        // Act
+        var result = await _projectRepository.DeleteAsync(Guid.NewGuid());
+        
+        // Assert
+        Assert.True(result.IsFailure);
+        Assert.IsType<NotFoundError>(result.Error);
+    }
 }

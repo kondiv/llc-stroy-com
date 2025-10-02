@@ -16,6 +16,8 @@ public interface IProjectService
     Task<Result<ProjectDto>> CreateAsync(Guid companyId, ProjectCreateRequest request, 
         CancellationToken cancellationToken = default);
 
-    Task<Result> UpdateAsync(Guid id, JsonPatchDocument<ProjectPatchDto> patchDocument,
+    Task<Result> UpdateAsync(Guid companyId, Guid projectId, JsonPatchDocument<ProjectPatchDto> patchDocument,
         CancellationToken cancellationToken = default);
+    
+    Task<Result> DeleteAsync(Guid companyId, Guid projectId, CancellationToken cancellationToken = default);
 }

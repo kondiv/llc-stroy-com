@@ -77,25 +77,28 @@ public class CompanyProjectsController : ControllerBase
         _logger.LogInformation("Attempting to create project {projectName} in company {companyId}", request.Name, companyId);
         var result = await _projectService.CreateAsync(companyId, request, cancellationToken);
 
-        if (result.IsFailure)
-        {
-            _logger.LogError("Cannot create project in company {companyId}\nReason: [{errorCode}]{errorMessage}",
-                companyId, result.Error.ErrorCode, result.Error.Message);
-            return BadRequest(result.Error);
-        }
+        if (result.Succeeded)
+            return CreatedAtRoute("GetProject", new { companyId, projectId = result.Value.Id }, result.Value);
         
-        return CreatedAtRoute("GetProject",new {companyId, projectId = result.Value.Id}, result.Value);
+        _logger.LogError("Cannot create project in company {companyId}\nReason: [{errorCode}]{errorMessage}",
+            companyId, result.Error.ErrorCode, result.Error.Message);
+        return result.Error.ErrorCode switch
+        {
+            ErrorCode.NotFound => NotFound(result.Error),
+            ErrorCode.AlreadyExists => Conflict(result.Error),
+            _ => BadRequest(),
+        };
     }
 
     [Authorize]
     [HttpPatch("{projectId:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<ActionResult> UpdateProjectAsync([FromRoute] Guid projectId, JsonPatchDocument<ProjectPatchDto> patchDocument,
+    public async Task<ActionResult> UpdateProjectAsync([FromRoute]Guid companyId, [FromRoute] Guid projectId, JsonPatchDocument<ProjectPatchDto> patchDocument,
         CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Attempting to update project {id}", projectId);
-        var result = await _projectService.UpdateAsync(projectId, patchDocument, cancellationToken);
+        var result = await _projectService.UpdateAsync(companyId, projectId, patchDocument, cancellationToken);
 
         if (result.Succeeded)
         {
@@ -111,5 +114,20 @@ public class CompanyProjectsController : ControllerBase
             ErrorCode.DbUpdateConcurrency or ErrorCode.AlreadyExists => Conflict(error.Message),
             _ => BadRequest(error.Message)
         };
+    }
+
+    [Authorize]
+    [HttpDelete("{projectId:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> DeleteProjectAsync([FromRoute] Guid companyId, [FromRoute] Guid projectId,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Attempting to delete project {id}", projectId);
+        
+        var result = await _projectService.DeleteAsync(companyId, projectId, cancellationToken);
+
+        return result.Succeeded ? NoContent() : NotFound(result.Error.Message);
     }
 }

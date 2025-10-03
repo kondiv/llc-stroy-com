@@ -196,7 +196,7 @@ public class StroyComDbContext : DbContext
         {
             entity.ToTable("defect");
 
-            entity.HasKey(e => e.Id);
+            entity.HasKey(e => new {e.Id, e.ProjectId});
             
             entity.Property(e => e.Id)
                 .HasDefaultValueSql("uuid_generate_v4()")
@@ -219,7 +219,6 @@ public class StroyComDbContext : DbContext
                 .HasColumnName("status");
             
             entity.Property(e => e.ProjectId)
-                .IsRequired()
                 .HasColumnName("project_id");
             
             entity.Property(e => e.ChiefEngineerId)

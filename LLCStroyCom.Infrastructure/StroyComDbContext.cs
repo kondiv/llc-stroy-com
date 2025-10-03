@@ -196,7 +196,7 @@ public class StroyComDbContext : DbContext
         {
             entity.ToTable("defect");
 
-            entity.HasKey(e => new {e.Id, e.ProjectId});
+            entity.HasKey(e => new { e.ProjectId, e.Id });
             
             entity.Property(e => e.Id)
                 .HasDefaultValueSql("uuid_generate_v4()")
@@ -212,17 +212,19 @@ public class StroyComDbContext : DbContext
                 .IsRequired()
                 .HasMaxLength(512)
                 .HasColumnName("description");
-            
+
             entity.Property(e => e.Status)
                 .IsRequired()
                 .HasDefaultValue(Status.New)
-                .HasColumnName("status");
+                .HasColumnName("status")
+                .IsConcurrencyToken();
             
             entity.Property(e => e.ProjectId)
                 .HasColumnName("project_id");
             
             entity.Property(e => e.ChiefEngineerId)
-                .HasColumnName("chief_engineer_id");
+                .HasColumnName("chief_engineer_id")
+                .IsConcurrencyToken();
 
             entity.HasOne(d => d.ChiefEngineer)
                 .WithMany(e => e.Defects)

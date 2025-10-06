@@ -197,6 +197,8 @@ public class StroyComDbContext : DbContext
             entity.ToTable("defect");
 
             entity.HasKey(e => new { e.ProjectId, e.Id });
+
+            entity.HasIndex(e => new { e.ProjectId, e.Name, e.Description }).IsUnique();
             
             entity.Property(e => e.Id)
                 .HasDefaultValueSql("uuid_generate_v4()")

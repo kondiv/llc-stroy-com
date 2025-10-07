@@ -1,11 +1,13 @@
 ﻿using AutoMapper;
 using LLCStroyCom.Domain.Dto;
 using LLCStroyCom.Domain.Entities;
+using LLCStroyCom.Domain.Models;
 using LLCStroyCom.Domain.Repositories;
 using LLCStroyCom.Domain.Requests;
 using LLCStroyCom.Domain.ResultPattern;
 using LLCStroyCom.Domain.ResultPattern.Errors;
 using LLCStroyCom.Domain.Services;
+using LLCStroyCom.Domain.Specifications.Defects;
 using Microsoft.AspNetCore.JsonPatch;
 
 namespace LLCStroyCom.Application.Services;
@@ -33,6 +35,17 @@ public sealed class DefectService : IDefectService
         var dto = _mapper.Map<DefectDto>(getDefectResult.Value);
 
         return Result<DefectDto>.Success(dto);
+    }
+
+    public async Task<PaginationResult<DefectDto>> ListAsync(Guid projectId, DefectSpecification specification, int page, int pageSize,
+        CancellationToken cancellationToken = default)
+    {
+        var defectPaginatedResult = await _defectRepository.ListAsync(projectId, specification, page, pageSize, cancellationToken);
+        
+        var defectDtoList = defectPaginatedResult.Items.Select(d => _mapper.Map<DefectDto>(d)).ToList();
+        
+        return new PaginationResult<DefectDto>(defectDtoList, defectPaginatedResult.Page, defectPaginatedResult.MaxPageSize,
+            defectPaginatedResult.PageCount, defectPaginatedResult.TotalCount);
     }
 
     public async Task<Result<DefectDto>> CreateAsync(Guid projectId, DefectCreateRequest request,

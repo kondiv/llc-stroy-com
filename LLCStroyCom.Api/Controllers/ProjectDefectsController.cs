@@ -1,7 +1,9 @@
 using LLCStroyCom.Domain.Dto;
+using LLCStroyCom.Domain.Models;
 using LLCStroyCom.Domain.Requests;
 using LLCStroyCom.Domain.ResultPattern.Errors;
 using LLCStroyCom.Domain.Services;
+using LLCStroyCom.Domain.Specifications.Defects;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
@@ -43,6 +45,15 @@ public class ProjectDefectsController : ControllerBase
             ErrorCode.NotFound => NotFound(result.Error.Message),
             _ => BadRequest(result.Error.Message)
         };
+    }
+
+    [Authorize]
+    [HttpGet]
+    public async Task<ActionResult<PaginationResult<DefectDto>>> ListAsync([FromRoute]Guid projectId, [FromQuery]DefectFilter filter,
+        int maxPageSize, int page, CancellationToken cancellationToken = default)
+    {
+        var specification = new DefectSpecification(filter);
+        return Ok(await _defectService.ListAsync(projectId, specification, maxPageSize, page, cancellationToken));
     }
 
     [Authorize]

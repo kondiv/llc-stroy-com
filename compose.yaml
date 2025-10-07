@@ -40,7 +40,7 @@
     networks:
       default:
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U $DB_USER:-postgres -d $DB_NAME:-stroycom" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_USER:-stroycom}" ]
       interval: 10s
       timeout: 5s
       retries: 5

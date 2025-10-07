@@ -80,6 +80,7 @@ public class ProjectDefectsController : ControllerBase
     [HttpPatch("{defectId:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult> UpdateAsync([FromRoute] Guid projectId, [FromRoute] Guid defectId,
@@ -97,7 +98,9 @@ public class ProjectDefectsController : ControllerBase
         _logger.LogError("Cannot update defect. Reason:[{errorCode}]{errorMessage}]", result.Error.ErrorCode, result.Error.Message);
         return result.Error.ErrorCode switch
         {
+            ErrorCode.NotFound => NotFound(result.Error.Message),
             ErrorCode.DbUpdateConcurrency => Conflict(result.Error.Message),
+            ErrorCode.AlreadyExists => Conflict(result.Error.Message),
             _ => BadRequest(result.Error.Message)
         };
     }

@@ -4,6 +4,7 @@ using LLCStroyCom.Domain.Entities;
 using LLCStroyCom.Domain.Repositories;
 using LLCStroyCom.Domain.Requests;
 using LLCStroyCom.Domain.ResultPattern;
+using LLCStroyCom.Domain.ResultPattern.Errors;
 using LLCStroyCom.Domain.Services;
 using Microsoft.AspNetCore.JsonPatch;
 
@@ -52,7 +53,7 @@ public sealed class DefectService : IDefectService
         }
         
         var dto = _mapper.Map<DefectDto>(defectCreateResult.Value);
-
+        
         return Result<DefectDto>.Success(dto);
     }
 

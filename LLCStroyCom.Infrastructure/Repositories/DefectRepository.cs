@@ -55,9 +55,14 @@ public sealed class DefectRepository : IDefectRepository
             await _context.SaveChangesAsync(cancellationToken);
             return Result.Success();
         }
+        catch (DbUpdateException e)
+            when (e.InnerException is NpgsqlException { SqlState: PostgresErrorCodes.UniqueViolation })
+        {
+            return Result.Failure(new AlreadyExistsError("Defect with such parameters already exists"));
+        }
         catch (DbUpdateConcurrencyException e)
         {
-            return Result.Failure(new DbUpdateConcurrencyError("Defect has been updated. Request updated defect and try again"), e);
+            return Result.Failure(new DbUpdateConcurrencyError("Defect has been updated by other person. Request updated defect and try again"), e);
         }
     }
 

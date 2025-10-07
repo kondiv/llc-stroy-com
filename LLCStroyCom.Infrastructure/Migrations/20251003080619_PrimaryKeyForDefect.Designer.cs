@@ -3,6 +3,7 @@ using System;
 using LLCStroyCom.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace LLCStroyCom.Infrastructure.Migrations
 {
     [DbContext(typeof(StroyComDbContext))]
-    partial class StroyComDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251003080619_PrimaryKeyForDefect")]
+    partial class PrimaryKeyForDefect
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -120,18 +123,17 @@ namespace LLCStroyCom.Infrastructure.Migrations
 
             modelBuilder.Entity("LLCStroyCom.Domain.Entities.Defect", b =>
                 {
-                    b.Property<Guid>("ProjectId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("project_id");
-
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("id")
                         .HasDefaultValueSql("uuid_generate_v4()");
 
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("project_id");
+
                     b.Property<Guid?>("ChiefEngineerId")
-                        .IsConcurrencyToken()
                         .HasColumnType("uuid")
                         .HasColumnName("chief_engineer_id");
 
@@ -148,18 +150,16 @@ namespace LLCStroyCom.Infrastructure.Migrations
                         .HasColumnName("name");
 
                     b.Property<int>("Status")
-                        .IsConcurrencyToken()
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasDefaultValue(0)
                         .HasColumnName("status");
 
-                    b.HasKey("ProjectId", "Id");
+                    b.HasKey("Id", "ProjectId");
 
                     b.HasIndex("ChiefEngineerId");
 
-                    b.HasIndex("ProjectId", "Name", "Description")
-                        .IsUnique();
+                    b.HasIndex("ProjectId");
 
                     b.ToTable("defect", (string)null);
                 });

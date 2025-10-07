@@ -13,5 +13,6 @@ public class DefectProfile : Profile
                 opt => opt.MapFrom(src => src.ChiefEngineer))
             .ForMember(dest => dest.Project,
                 opt => opt.MapFrom(src => src.Project));
+        CreateMap<Defect, DefectPatchDto>().ReverseMap();
     }
 }

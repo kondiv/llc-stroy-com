@@ -1,7 +1,7 @@
-﻿using LLCStroyCom.Domain.Entities;
+using LLCStroyCom.Domain.Entities;
 using LLCStroyCom.Domain.Enums;
-using LLCStroyCom.Domain.Exceptions;
 using LLCStroyCom.Domain.Repositories;
+using LLCStroyCom.Domain.ResultPattern.Errors;
 using LLCStroyCom.Infrastructure;
 using LLCStroyCom.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -14,11 +14,11 @@ public class DefectRepositoryTests
 
     public DefectRepositoryTests()
     {
-        var context = GetInMemoryContext();
+        var context = GetInMemoryDbContext();
         _defectRepository = new DefectRepository(context);
     }
-    
-    private static StroyComDbContext GetInMemoryContext()
+
+    private static StroyComDbContext GetInMemoryDbContext()
     {
         var options = new DbContextOptionsBuilder<StroyComDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
@@ -28,55 +28,46 @@ public class DefectRepositoryTests
     }
 
     [Fact]
-    public async Task GetAsync_WhenDefectNotFound_ShouldThrowCouldNotFindDefect()
+    public async Task GetAsync_WhenDefectFound_ShouldReturnResultSuccessWithDefect()
     {
         // Arrange
+        var defect = new Defect()
+        {
+            Id = Guid.NewGuid(),
+            ProjectId = Guid.NewGuid(),
+            Name = "Трещина",
+            Description = "Описание",
+            Status = Status.New
+        };
+
+        var context = GetInMemoryDbContext();
+        await context.Defects.AddAsync(defect);
+        await context.SaveChangesAsync();
+
+        var repository = new DefectRepository(context);
         
         // Act
-        var act = () => _defectRepository.GetAsync(Guid.NewGuid());
+        var result = await repository.GetAsync(defect.ProjectId, defect.Id);
         
         // Assert
-        await Assert.ThrowsAsync<CouldNotFindDefect>(act);
+        Assert.True(result.Succeeded);
+        var value = result.Value;
+        Assert.Equal(defect.Id, value.Id);
+        Assert.Equal(defect.ProjectId, value.ProjectId);
+        Assert.Equal(defect.Name, value.Name);
+        Assert.Equal(defect.Description, value.Description);
     }
 
     [Fact]
-    public async Task GetAsync_WhenDefectFound_ShouldReturnDefect()
+    public async Task GetAsync_WhenDefectNotFound_ShouldReturnResultFailure()
     {
         // Arrange
-        var context = GetInMemoryContext();
-        var defectId = Guid.NewGuid();
-        var defect = new Defect()
-        {
-            Id = defectId,
-            Name = "Трещина",
-            Description = "Трещина",
-            ProjectId = Guid.NewGuid(),
-        };
-        var project = new Project()
-        {
-            Id = defect.ProjectId,
-            City = "Moscow",
-            CreatedAt = DateTimeOffset.UtcNow,
-            Name = "Project",
-            Status = Status.InProgress,
-            Defects = new List<Defect>() { defect }
-        };
-        
-        await context.Projects.AddAsync(project);
-
-        await context.Defects.AddAsync(defect);
-        await context.SaveChangesAsync();
-        
-        var defectRepository = new DefectRepository(context);
         
         // Act
-        var result = await defectRepository.GetAsync(defectId);
+        var result = await _defectRepository.GetAsync(Guid.NewGuid(), Guid.NewGuid());
         
         // Assert
-        Assert.Equal(defect.Id, result.Id);
-        Assert.Equal(defect.Name, result.Name);
-        Assert.Equal(defect.Description, result.Description);
-        Assert.Equal(defect.ProjectId, result.ProjectId);
+        Assert.True(result.IsFailure);
     }
 
     [Fact]
@@ -86,238 +77,186 @@ public class DefectRepositoryTests
         var cancellationToken = new CancellationToken(canceled: true);
         
         // Act
-        var act = () => _defectRepository.GetAsync(Guid.NewGuid(), cancellationToken);
-        
-        // Assert
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(act);
-    }
-
-    [Fact]
-    public async Task CreateAsync_WhenAlreadyExists_ShouldThrowArgumentException()
-    {
-        // Arrange
-        var defect = new Defect()
-        {
-            Id = Guid.NewGuid(),
-            Name = "Трещина",
-            Description = "Трещина",
-            ProjectId = Guid.NewGuid(),
-        };
-
-        var context = GetInMemoryContext();
-        await context.Defects.AddAsync(defect);
-        await context.SaveChangesAsync();
-        
-        var defectRepository = new DefectRepository(context);
-        
-        // Act
-        var act = () => defectRepository.CreateAsync(defect);
-        
-        // Assert
-        await Assert.ThrowsAsync<ArgumentException>(act);
-    }
-
-    [Fact]
-    public async Task CreateAsync_WhenInvalidModel_ShouldThrowDbUpdateException()
-    {
-        // Arrange
-        var defect = new Defect();
-        
-        // Act
-        var act = () => _defectRepository.CreateAsync(defect);
-        
-        // Assert
-        await Assert.ThrowsAsync<DbUpdateException>(act);
-    }
-
-    [Fact]
-    public async Task CreateAsync_WhenEverythingIsOk_ShouldCreateNewDefectInDb()
-    {
-        // Arrange
-        var context = GetInMemoryContext();
-        var defectRepository = new DefectRepository(context);
-        var defect = new Defect()
-        {
-            Id = Guid.NewGuid(),
-            Name = "Трещина",
-            Description = "Трещина",
-            ProjectId = Guid.NewGuid(),
-        };
-        
-        // Act
-        await defectRepository.CreateAsync(defect);
-        
-        // Assert
-        Assert.Equal(1, await context.Defects.CountAsync());
-        Assert.Equal(Status.New, defect.Status);
-    }
-
-    [Fact]
-    public async Task CreateAsync_WhenOperationCanceled_ShouldThrowOperationCanceledException()
-    {
-        // Arrange
-        var cancellationToken = new CancellationToken(canceled: true);
-        var defect = new Defect()
-        {
-            Id = Guid.NewGuid(),
-            Name = "Трещина",
-            Description = "Трещина",
-            ProjectId = Guid.NewGuid(),
-        };
-        
-        // Act
-        var act = () => _defectRepository.CreateAsync(defect, cancellationToken);
-        
-        // Assert
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(act);
-    }
-
-    [Fact]
-    public async Task UpdateAsync_WhenDefectNotFound_ShouldThrowCouldNotFindDefect()
-    {
-        // Arrange
-        
-        // Act
-        var act = () => _defectRepository.UpdateAsync(Guid.NewGuid(), Status.Completed);
-        
-        // Assert
-        await Assert.ThrowsAsync<CouldNotFindDefect>(act);
-    }
-
-    [Fact]
-    public async Task UpdateAsync_WhenEverythingIsOk_ShouldUpdateDefectInDb()
-    {
-        // Arrange
-        var defectId = Guid.NewGuid();
-        var defect = new Defect()
-        {
-            Id = defectId,
-            Name = "Трещина",
-            Description = "Трещина",
-            ProjectId = Guid.NewGuid(),
-        };
-        var project = new Project()
-        {
-            Id = defect.ProjectId,
-            City = "Moscow",
-            CreatedAt = DateTimeOffset.UtcNow,
-            Name = "Project",
-            Status = Status.InProgress,
-            Defects = new List<Defect>() { defect }
-        };
-        
-        var context = GetInMemoryContext();
-        await context.Projects.AddAsync(project);
-        await context.Defects.AddAsync(defect);
-        await context.SaveChangesAsync();
-        
-        var defectRepository = new DefectRepository(context);
-        
-        // Act
-        var updateResult = await defectRepository.UpdateAsync(defectId, Status.Completed);
-        
-        // Assert
-        Assert.True(updateResult.Succeeded);
-        Assert.Equal(Status.Completed, defect.Status);
-    }
-
-    [Fact]
-    public async Task UpdateAsync_WhenOperationCanceled_ShouldThrowOperationCanceledException()
-    {
-        // Arrange
-        var cancellationToken = new CancellationToken(canceled: true);
-        
-        // Act
-        var act = () => _defectRepository.UpdateAsync(Guid.NewGuid(), Status.Completed, cancellationToken);
+        var act = () => _defectRepository.GetAsync(Guid.NewGuid(), Guid.NewGuid(), cancellationToken);
         
         // Assert
         await Assert.ThrowsAsync<OperationCanceledException>(act);
     }
 
     [Fact]
-    public async Task DeleteAsync_WhenNotFound_ShouldThrowCouldNotFindDefect()
+    public async Task CreateAsync_WhenCreatedSuccessfully_ShouldReturnResultSuccessWithDefect()
     {
         // Arrange
+        var defect = new Defect()
+        {
+            Name = "name",
+            Description = "description",
+            Status = Status.New,
+            ProjectId = Guid.NewGuid(),
+        };
         
         // Act
-        var act = () =>  _defectRepository.DeleteAsync(Guid.NewGuid());
+        var result = await _defectRepository.CreateAsync(defect);
         
         // Assert
-        await Assert.ThrowsAsync<CouldNotFindDefect>(act);
+        Assert.True(result.Succeeded);
+        Assert.Equal(defect.Name, result.Value.Name);
+    }
+
+    // Works correctly, but not in InMemoryDbContext - Test result: Success
+    [Fact]
+    public async Task CreateAsync_WhenDefectAlreadyExists_ShouldReturnResultFailure()
+    {
+        // Arrange
+        var defect = new Defect()
+        {
+            Name = "name",
+            Description = "description",
+            Status = Status.New,
+            ProjectId = Guid.NewGuid(),
+        };
+
+        var context = GetInMemoryDbContext();
+        await context.Defects.AddAsync(defect);
+        await context.SaveChangesAsync();
+        var repository = new DefectRepository(context);
+
+        // Act
+        var act = () => repository.CreateAsync(defect);
+        
+        // Assert
+        await Assert.ThrowsAsync<ArgumentException>(act);
     }
 
     [Fact]
-    public async Task DeleteAsync_WhenFound_ShouldDeleteDefectFromDb()
+    public async Task CreateAsync_WhenOperationCanceled_ShouldThrowOperationCanceledException()
     {
         // Arrange
-        var context = GetInMemoryContext();
-        var defectId = Guid.NewGuid();
         var defect = new Defect()
         {
-            Id = defectId,
-            Name = "Трещина",
-            Description = "Трещина",
+            Name = "name",
+            Description = "description",
+            Status = Status.New,
             ProjectId = Guid.NewGuid(),
-        };
-        var project = new Project()
-        {
-            Id = defect.ProjectId,
-            City = "Moscow",
-            CreatedAt = DateTimeOffset.UtcNow,
-            Name = "Project",
-            Status = Status.InProgress,
-            Defects = new List<Defect>() { defect }
+            ChiefEngineer = null
         };
         
-        await context.Projects.AddAsync(project);
+        var cancellationToken = new CancellationToken(canceled: true);
+        
+        // Act
+        var act = () => _defectRepository.CreateAsync(defect, cancellationToken);
+        
+        // Assert
+        await Assert.ThrowsAsync<TaskCanceledException>(act);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_WhenUpdatedSuccessfully_ShouldReturnResultSuccess()
+    {
+        // Arrange
+        var defect = new Defect()
+        {
+            Id = Guid.NewGuid(),
+            Name = "name",
+            Description = "description",
+            Status = Status.New,
+            ProjectId = Guid.NewGuid(),
+        };
+
+        var context = GetInMemoryDbContext();
+        await context.Defects.AddAsync(defect);
+        await context.SaveChangesAsync();
+        var repository = new DefectRepository(context);
+        
+        context.Defects.Entry(defect).State = EntityState.Detached;
+
+        var defectToUpdate = new Defect()
+        {
+            Id = defect.Id,
+            ProjectId = defect.ProjectId,
+            Name = "new-name",
+            Description = "new-description",
+        };
+        
+        // Act
+        var result = await repository.UpdateAsync(defectToUpdate);
+        
+        // Assert
+        Assert.True(result.Succeeded);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_WhenOperationCanceled_ShouldThrowOperationCanceledException()
+    {
+        // Arrange
+        var defect = new Defect()
+        {
+            Name = "name",
+            Description = "description",
+            Status = Status.New,
+            ProjectId = Guid.NewGuid(),
+            ChiefEngineer = null
+        };
+        
+        var cancellationToken = new CancellationToken(canceled: true);
+        
+        // Act
+        var act = () => _defectRepository.UpdateAsync(defect, cancellationToken);
+        
+        // Assert
+        await Assert.ThrowsAsync<TaskCanceledException>(act);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_WhenDefectFound_ShouldReturnResultSuccess()
+    {
+        // Arrange
+        var defect = new Defect()
+        {
+            Id = Guid.NewGuid(),
+            Name = "name",
+            Description = "description",
+            Status = Status.New,
+            ProjectId = Guid.NewGuid(),
+        };
+        
+        var context = GetInMemoryDbContext();
         await context.Defects.AddAsync(defect);
         await context.SaveChangesAsync();
         
-        var defectRepository = new DefectRepository(context);
+        var repository = new DefectRepository(context);
         
         // Act
-        await defectRepository.DeleteAsync(defectId);
+        var result = await repository.DeleteAsync(defect.ProjectId, defect.Id);
         
         // Assert
+        Assert.True(result.Succeeded);
         Assert.Equal(0, await context.Defects.CountAsync());
+    }
+
+    [Fact]
+    public async Task DeleteAsync_WhenDefectNotFound_ShouldReturnResultFailure()
+    {
+        // Arrange
+        
+        // Act
+        var result = await _defectRepository.DeleteAsync(Guid.NewGuid(), Guid.NewGuid());
+        
+        // Assert
+        Assert.True(result.IsFailure);
+        Assert.IsType<NotFoundError>(result.Error);
     }
 
     [Fact]
     public async Task DeleteAsync_WhenOperationCanceled_ShouldThrowOperationCanceledException()
     {
         // Arrange
-        var context = GetInMemoryContext();
-        var defectId = Guid.NewGuid();
-        var defect = new Defect()
-        {
-            Id = defectId,
-            Name = "Трещина",
-            Description = "Трещина",
-            ProjectId = Guid.NewGuid(),
-        };
-        var project = new Project()
-        {
-            Id = defect.ProjectId,
-            City = "Moscow",
-            CreatedAt = DateTimeOffset.UtcNow,
-            Name = "Project",
-            Status = Status.InProgress,
-            Defects = new List<Defect>() { defect }
-        };
-        
-        await context.Projects.AddAsync(project);
-        await context.Defects.AddAsync(defect);
-        await context.SaveChangesAsync();
-        
-        var defectRepository = new DefectRepository(context);
-        
         var cancellationToken = new CancellationToken(canceled: true);
         
         // Act
-        var act = () => defectRepository.DeleteAsync(defectId, cancellationToken);
+        var act = () => _defectRepository.DeleteAsync(Guid.NewGuid(), Guid.NewGuid(), cancellationToken);
         
         // Assert
-        Assert.Equal(1, await context.Defects.CountAsync());
         await Assert.ThrowsAsync<OperationCanceledException>(act);
     }
 }

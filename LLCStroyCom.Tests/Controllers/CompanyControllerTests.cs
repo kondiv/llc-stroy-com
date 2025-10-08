@@ -14,15 +14,13 @@ namespace LLCStroyCom.Tests.Controllers;
 public class CompanyControllerTests
 {
     private readonly Mock<ICompanyService> _companyServiceMock;
-    private readonly Mock<IProjectService> _projectServiceMock;
     private readonly CompanyController _companyController;
     
     public CompanyControllerTests()
     {
         _companyServiceMock = new Mock<ICompanyService>();
-        _projectServiceMock = new Mock<IProjectService>();
         var loggerMock = new Mock<ILogger<CompanyController>>();
-        _companyController = new CompanyController(_companyServiceMock.Object, _projectServiceMock.Object, loggerMock.Object);
+        _companyController = new CompanyController(_companyServiceMock.Object, loggerMock.Object);
     }
 
     [Fact]

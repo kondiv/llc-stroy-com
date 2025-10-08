@@ -15,6 +15,10 @@ namespace LLCStroyCom.Tests.Repositories;
 public class ProjectRepositoryTests
 {
     private readonly IProjectRepository _projectRepository;
+    
+    private Company company1 = new Company(){Id = Guid.NewGuid(), Name = "Company1"};
+    private Company company2 = new Company(){Id = Guid.NewGuid(), Name = "Company2"};
+    private Company company3 = new Company(){Id = Guid.NewGuid(), Name = "Company3"};
 
     public ProjectRepositoryTests()
     {
@@ -35,10 +39,6 @@ public class ProjectRepositoryTests
     {
         var context = GetInMemoryDbContext();
         
-        var company1 = new Company(){Id = Guid.NewGuid(), Name = "Company1"};
-        var company2 = new Company(){Id = Guid.NewGuid(), Name = "Company2"};
-        var company3 = new Company(){Id = Guid.NewGuid(), Name = "Company3"};
-        
         await context.Companies.AddRangeAsync(company1, company2, company3);
         await context.SaveChangesAsync();
         
@@ -47,42 +47,48 @@ public class ProjectRepositoryTests
             Name = "Project1",
             City = "Москва",
             CreatedAt = DateTimeOffset.UtcNow,
-            Status = Status.InProgress
+            Status = Status.InProgress,
+            CompanyId = company1.Id,
         };
         var project2 = new Project()
         {
             Name = "Project2",
             City = "Москва",
             CreatedAt = DateTimeOffset.UtcNow.AddMinutes(5),
-            Status = Status.Canceled
+            Status = Status.Canceled,
+            CompanyId = company2.Id,
         };
         var project3 = new Project()
         {
             Name = "Project3",
             City = "НеМосква",
             CreatedAt = DateTimeOffset.UtcNow.AddMinutes(10),
-            Status = Status.InProgress
+            Status = Status.InProgress,
+            CompanyId = company3.Id,
         };
         var project4 = new Project()
         {
             Name = "Project4",
             City = "НеМосква",
             CreatedAt = DateTimeOffset.UtcNow.AddMinutes(15),
-            Status = Status.Completed
+            Status = Status.Completed,
+            CompanyId = company1.Id
         };
         var project5 = new Project()
         {
             Name = "Project5",
             City = "Москва",
             CreatedAt = DateTimeOffset.UtcNow.AddMinutes(20),
-            Status = Status.Completed
+            Status = Status.Completed,
+            CompanyId = company1.Id
         };
         var project6 = new Project()
         {
             Name = "Project6",
             City = "НеМосква",
             CreatedAt = DateTimeOffset.UtcNow.AddMinutes(25),
-            Status = Status.New
+            Status = Status.New,
+            CompanyId = company2.Id
         };
         
         await context.Projects.AddRangeAsync(project1, project2, project3, project4, project5, project6);
@@ -242,7 +248,7 @@ public class ProjectRepositoryTests
         ProjectPageToken? pageToken = null;
         var maxPageSize = 5;
 
-        var specification = new ProjectSpecification(projectFilter, pageToken, maxPageSize);
+        var specification = new ProjectSpecification(company1.Id, projectFilter, pageToken, maxPageSize);
         var context = await GetFilledInMemoryDbContextAsync();
         IProjectRepository projectRepository = new ProjectRepository(context);
         
@@ -259,8 +265,8 @@ public class ProjectRepositoryTests
         // Arrange
         var projectFilter = new ProjectFilter();
         ProjectPageToken? pageToken = null;
-        var maxPageSize = 5;
-        var specification = new ProjectSpecification(projectFilter, pageToken, maxPageSize);
+        var maxPageSize = 2;
+        var specification = new ProjectSpecification(company1.Id, projectFilter, pageToken, maxPageSize);
         
         var context = await GetFilledInMemoryDbContextAsync();
         IProjectRepository projectRepository = new ProjectRepository(context);
@@ -282,7 +288,7 @@ public class ProjectRepositoryTests
         };
         ProjectPageToken? pageToken = null;
         var maxPageSize = 5;
-        var specification = new ProjectSpecification(projectFilter, pageToken, maxPageSize);
+        var specification = new ProjectSpecification(company1.Id, projectFilter, pageToken, maxPageSize);
         
         var context = await GetFilledInMemoryDbContextAsync();
         IProjectRepository projectRepository = new ProjectRepository(context);
@@ -293,11 +299,8 @@ public class ProjectRepositoryTests
         
         // Assert
         Assert.Equal("Project1", listResult[0].Name);
-        Assert.Equal("Project2", listResult[1].Name);
-        Assert.Equal("Project3", listResult[2].Name);
-        Assert.Equal("Project4", listResult[3].Name);
-        Assert.Equal("Project5", listResult[4].Name);
-        Assert.Equal("Project6", listResult[5].Name);
+        Assert.Equal("Project4", listResult[1].Name);
+        Assert.Equal("Project5", listResult[2].Name);
     }
 
     [Fact]
@@ -311,7 +314,7 @@ public class ProjectRepositoryTests
         };
         ProjectPageToken? pageToken = null;
         var maxPageSize = 5;
-        var specification = new ProjectSpecification(projectFilter, pageToken, maxPageSize);
+        var specification = new ProjectSpecification(company1.Id, projectFilter, pageToken, maxPageSize);
         
         var context = await GetFilledInMemoryDbContextAsync();
         IProjectRepository projectRepository = new ProjectRepository(context);
@@ -321,12 +324,9 @@ public class ProjectRepositoryTests
         var listResult = result.ToList();
         
         // Assert
-        Assert.Equal("Project6", listResult[0].Name);
-        Assert.Equal("Project5", listResult[1].Name);
-        Assert.Equal("Project4", listResult[2].Name);
-        Assert.Equal("Project3", listResult[3].Name);
-        Assert.Equal("Project2", listResult[4].Name);
-        Assert.Equal("Project1", listResult[5].Name);
+        Assert.Equal("Project5", listResult[0].Name);
+        Assert.Equal("Project4", listResult[1].Name);
+        Assert.Equal("Project1", listResult[2].Name);
     }
 
     [Fact]
@@ -339,7 +339,7 @@ public class ProjectRepositoryTests
         };
         ProjectPageToken? pageToken = null;
         var maxPageSize = 5;
-        var specification = new ProjectSpecification(projectFilter, pageToken, maxPageSize);
+        var specification = new ProjectSpecification(company1.Id, projectFilter, pageToken, maxPageSize);
         
         var context = await GetFilledInMemoryDbContextAsync();
         IProjectRepository projectRepository = new ProjectRepository(context);
@@ -363,7 +363,7 @@ public class ProjectRepositoryTests
         };
         ProjectPageToken? pageToken = null;
         var maxPageSize = 5;
-        var specification = new ProjectSpecification(projectFilter, pageToken, maxPageSize);
+        var specification = new ProjectSpecification(company1.Id, projectFilter, pageToken, maxPageSize);
 
         var context = await GetFilledInMemoryDbContextAsync();
         IProjectRepository projectRepository = new ProjectRepository(context);
@@ -371,6 +371,7 @@ public class ProjectRepositoryTests
         // Act
         var result = await projectRepository.ListAsync(specification);
         var listResult = result.ToList();
+        
         // Assert
         Assert.True(listResult[0].CreatedAt > listResult[1].CreatedAt);
     }
@@ -385,7 +386,7 @@ public class ProjectRepositoryTests
         };
         ProjectPageToken? pageToken = null;
         var maxPageSize = 5;
-        var specification = new ProjectSpecification(projectFilter, pageToken, maxPageSize);
+        var specification = new ProjectSpecification(company1.Id, projectFilter, pageToken, maxPageSize);
         
         var context = await GetFilledInMemoryDbContextAsync();
         IProjectRepository projectRepository = new ProjectRepository(context);
@@ -408,7 +409,7 @@ public class ProjectRepositoryTests
         };
         ProjectPageToken? pageToken = null;
         var maxPageSize = 5;
-        var specification = new ProjectSpecification(projectFilter, pageToken, maxPageSize);
+        var specification = new ProjectSpecification(Guid.NewGuid(), projectFilter, pageToken, maxPageSize);
         
         var context = await GetFilledInMemoryDbContextAsync();
         IProjectRepository projectRepository = new ProjectRepository(context);
@@ -432,7 +433,7 @@ public class ProjectRepositoryTests
         };
         ProjectPageToken? pageToken = null;
         var maxPageSize = 5;
-        var specification = new ProjectSpecification(projectFilter, pageToken, maxPageSize);
+        var specification = new ProjectSpecification(Guid.NewGuid(), projectFilter, pageToken, maxPageSize);
         
         var context = await GetFilledInMemoryDbContextAsync();
         IProjectRepository projectRepository = new ProjectRepository(context);
@@ -460,7 +461,7 @@ public class ProjectRepositoryTests
         };
         ProjectPageToken? pageToken = null;
         var maxPageSize = 5;
-        var specification = new ProjectSpecification(projectFilter, pageToken, maxPageSize);
+        var specification = new ProjectSpecification(company1.Id, projectFilter, pageToken, maxPageSize);
         
         var context = await GetFilledInMemoryDbContextAsync();
         IProjectRepository projectRepository = new ProjectRepository(context);
@@ -485,7 +486,7 @@ public class ProjectRepositoryTests
         };
         ProjectPageToken? pageToken = null;
         var maxPageSize = 5;
-        var specification = new ProjectSpecification(projectFilter, pageToken, maxPageSize);
+        var specification = new ProjectSpecification(Guid.NewGuid(), projectFilter, pageToken, maxPageSize);
         var cancellationToken = new CancellationToken(canceled: true);
         
         var context = await GetFilledInMemoryDbContextAsync();

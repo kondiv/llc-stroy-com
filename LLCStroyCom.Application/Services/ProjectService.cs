@@ -52,7 +52,7 @@ public class ProjectService : IProjectService
         return Result<ProjectDto>.Success(projectDto);
     }
 
-    public async Task<PaginatedProjectListResponse> ListAsync(string? plainPageToken, ProjectFilter filter, int maxPageSize, 
+    public async Task<PaginatedProjectListResponse> ListAsync(Guid companyId, string? plainPageToken, ProjectFilter filter, int maxPageSize, 
         CancellationToken cancellationToken = default)
     {
         ProjectPageToken? token = null;
@@ -62,7 +62,7 @@ public class ProjectService : IProjectService
             token = _pageTokenService.Decode<ProjectPageToken>(plainPageToken);
         }
         
-        var specification = new ProjectSpecification(filter, token, maxPageSize);
+        var specification = new ProjectSpecification(companyId, filter, token, maxPageSize);
 
         var projects = await _projectRepository.ListAsync(specification, cancellationToken);
         var projectsList = projects.ToList();

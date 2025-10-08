@@ -7,8 +7,9 @@ namespace LLCStroyCom.Domain.Specifications.Projects;
 
 public class ProjectSpecification : Specification<Project>
 {
-    public ProjectSpecification(ProjectFilter filter, ProjectPageToken? pageToken, int maxPageSize)
+    public ProjectSpecification(Guid companyId, ProjectFilter filter, ProjectPageToken? pageToken, int maxPageSize)
     {
+        Query.Where(p => p.CompanyId == companyId);
         Query.Where(p => p.City == filter.City, !string.IsNullOrEmpty(filter.City));
         Query.Where(p => p.Status == filter.Status, filter.Status.HasValue);
 

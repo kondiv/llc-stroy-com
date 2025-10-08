@@ -375,4 +375,18 @@ public class DefectRepositoryTests
         Assert.False(result.HasNextPage);
         Assert.False(result.HasPreviousPage);
     }
+
+    [Fact]
+    public async Task ListAsync_WhenOperationCanceled_ShouldThrowOperationCanceledException()
+    {
+        // Arrange
+        var cancellationToken = new CancellationToken(canceled: true);
+        
+        // Act
+        var act = () => _defectRepository.ListAsync(Guid.NewGuid(),
+            new DefectSpecification(new DefectFilter()), 1, 1, cancellationToken);
+        
+        // Assert
+        await Assert.ThrowsAsync<OperationCanceledException>(act);
+    }
 }

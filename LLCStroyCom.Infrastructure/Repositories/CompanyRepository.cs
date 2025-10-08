@@ -1,8 +1,11 @@
 ﻿using Ardalis.Specification;
+using Ardalis.Specification.EntityFrameworkCore;
 using LLCStroyCom.Domain.Entities;
 using LLCStroyCom.Domain.Exceptions;
+using LLCStroyCom.Domain.Models;
 using LLCStroyCom.Domain.Models.PageTokens;
 using LLCStroyCom.Domain.Repositories;
+using LLCStroyCom.Domain.Specifications.Companies;
 using Microsoft.EntityFrameworkCore;
 
 namespace LLCStroyCom.Infrastructure.Repositories;
@@ -15,11 +18,21 @@ public sealed class CompanyRepository : ICompanyRepository
     {
         _context = context;
     }
-    
-    public Task<IEnumerable<Company>> ListAsync(List<ISpecification<Company>> specifications, int maxPageSize, IPageToken pageToken,
+
+    public async Task<PaginationResult<Company>> ListAsync(CompanySpecification specification, int maxPageSize, int page,
         CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        var query = SpecificationEvaluator.Default.GetQuery(_context.Companies.AsQueryable(), specification);
+
+        var totalCount = await query.CountAsync(cancellationToken);
+        var pageCount = (int)Math.Ceiling(totalCount / (double)maxPageSize);
+        
+        var items = await query
+            .Skip((page - 1) * maxPageSize)
+            .Take(maxPageSize)
+            .ToListAsync(cancellationToken);
+        
+        return new PaginationResult<Company>(items, page, maxPageSize, pageCount, totalCount);
     }
 
     public async Task<Company> GetAsync(Guid id, CancellationToken cancellationToken = default)

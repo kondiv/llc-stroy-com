@@ -1,7 +1,9 @@
+using Ardalis.Specification.EntityFrameworkCore;
 using LLCStroyCom.Domain.Entities;
 using LLCStroyCom.Domain.Exceptions;
+using LLCStroyCom.Domain.Models;
 using LLCStroyCom.Domain.Repositories;
-using LLCStroyCom.Domain.Services;
+using LLCStroyCom.Domain.Specifications.Users;
 using Microsoft.EntityFrameworkCore;
 
 namespace LLCStroyCom.Infrastructure.Repositories;
@@ -49,6 +51,24 @@ public sealed class UserRepository : IUserRepository
                    .Include(u => u.Role)
                    .FirstOrDefaultAsync(u => u.Email == email, cancellationToken)
                ?? throw CouldNotFindUser.WithEmail(email);
+    }
+
+    public async Task<PaginationResult<ApplicationUser>> ListCompanyEmployeesAsync(Guid companyId, ApplicationUserSpecification specification, int maxPageSize, int page,
+        CancellationToken cancellationToken = default)
+    {
+        var query = _context.Users.Where(u => u.CompanyId == companyId).AsQueryable();
+        
+        var filteredQuery = SpecificationEvaluator.Default.GetQuery(query, specification);
+
+        var totalCount = await filteredQuery.CountAsync(cancellationToken);
+        var pageCount = (int)Math.Ceiling(totalCount / (double)maxPageSize);
+        
+        var items = await filteredQuery
+            .Skip((page - 1) * maxPageSize)
+            .Take(maxPageSize)
+            .ToListAsync(cancellationToken);
+
+        return new PaginationResult<ApplicationUser>(items, page, maxPageSize, pageCount, totalCount);
     }
 
     public async Task AssignNewAndRevokeOldRefreshTokenAsync(Guid userId, RefreshToken refreshToken, CancellationToken cancellationToken = default)

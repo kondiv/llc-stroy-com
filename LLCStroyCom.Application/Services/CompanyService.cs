@@ -2,9 +2,12 @@
 using LLCStroyCom.Domain.Dto;
 using LLCStroyCom.Domain.Entities;
 using LLCStroyCom.Domain.Exceptions;
+using LLCStroyCom.Domain.Models;
 using LLCStroyCom.Domain.Repositories;
 using LLCStroyCom.Domain.Requests;
 using LLCStroyCom.Domain.Services;
+using LLCStroyCom.Domain.Specifications.Companies;
+using LLCStroyCom.Domain.Specifications.Users;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.Extensions.Logging;
 
@@ -38,6 +41,17 @@ public class CompanyService : ICompanyService
         var companyDto = _mapper.Map<CompanyDto>(company);
 
         return companyDto;
+    }
+
+    public async Task<PaginationResult<CompanyDto>> ListAsync(CompanySpecification specification, int maxPageSize, int page,
+        CancellationToken cancellationToken = default)
+    {
+        var repositoryPaginationResult = await _companyRepository.ListAsync(specification, maxPageSize, page, cancellationToken);
+        
+        var companyDtoItems = repositoryPaginationResult.Items.Select(c => _mapper.Map<CompanyDto>(c)).ToList();
+        
+        return new PaginationResult<CompanyDto>(companyDtoItems, repositoryPaginationResult.Page, repositoryPaginationResult.MaxPageSize,
+            repositoryPaginationResult.PageCount, repositoryPaginationResult.TotalCount);
     }
 
     public async Task<CompanyDto> CreateAsync(CompanyCreateRequest request, CancellationToken cancellationToken = default)
@@ -92,6 +106,18 @@ public class CompanyService : ICompanyService
         var employeeDto = _mapper.Map<EmployeeDto>(employee);
 
         return employeeDto;
+    }
+
+    public async Task<PaginationResult<EmployeeDto>> ListCompanyEmployeesAsync(Guid companyId, ApplicationUserSpecification specification,
+        int maxPageSize, int page, CancellationToken cancellationToken = default)
+    {
+        var repositoryPaginationResult = await _userRepository.ListCompanyEmployeesAsync(companyId, specification, 
+            maxPageSize, page, cancellationToken);
+        
+        var employeesDtoList = repositoryPaginationResult.Items.Select(e => _mapper.Map<EmployeeDto>(e)).ToList();
+        
+        return new PaginationResult<EmployeeDto>(employeesDtoList, repositoryPaginationResult.Page, repositoryPaginationResult.MaxPageSize,
+            repositoryPaginationResult.PageCount, repositoryPaginationResult.TotalCount);
     }
 
     public async Task<Guid> AddEmployeeAsync(Guid companyId, Guid employeeId, CancellationToken cancellationToken = default)

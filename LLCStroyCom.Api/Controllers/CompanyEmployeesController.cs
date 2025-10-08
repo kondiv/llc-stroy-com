@@ -1,6 +1,8 @@
 using LLCStroyCom.Domain.Dto;
 using LLCStroyCom.Domain.Exceptions;
+using LLCStroyCom.Domain.Models;
 using LLCStroyCom.Domain.Services;
+using LLCStroyCom.Domain.Specifications.Users;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
@@ -40,6 +42,21 @@ public class CompanyEmployeesController : ControllerBase
             _logger.LogWarning(e, e.Message);
             return NotFound(e.Message);
         }
+    }
+
+    [Authorize]
+    [HttpGet]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<PaginationResult<EmployeeDto>>> ListAsync([FromRoute] Guid companyId,
+        [FromQuery]ApplicationUserFilter filter,
+        [FromQuery]int maxPageSize, [FromQuery]int page, CancellationToken cancellationToken = default)
+    {
+        var specification = new ApplicationUserSpecification(filter);
+        
+        var result = await _companyService.ListCompanyEmployeesAsync(companyId, specification, maxPageSize, page, cancellationToken);
+
+        return Ok(result);
     }
     
     [Authorize]

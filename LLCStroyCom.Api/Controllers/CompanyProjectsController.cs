@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace LLCStroyCom.Api.Controllers;
 
 [ApiController]
-[Route("api/companies/{companyId}/projects")]
+[Route("api/companies/{companyId:guid}/projects")]
 public class CompanyProjectsController : ControllerBase
 {
     private readonly IProjectService _projectService;
@@ -48,7 +48,7 @@ public class CompanyProjectsController : ControllerBase
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<PaginatedProjectListResponse>> ListAsync([FromQuery] ProjectsQuery query,
+    public async Task<ActionResult<PaginatedProjectListResponse>> ListAsync([FromRoute]Guid companyId, [FromQuery] ProjectsQuery query,
         CancellationToken cancellationToken = default)
     {
         try
@@ -56,7 +56,7 @@ public class CompanyProjectsController : ControllerBase
             _logger.LogInformation("Getting projects: {query}", query);
             
             var result =
-                await _projectService.ListAsync(query.PageToken, query.ProjectFilter, query.MaxPageSize, cancellationToken);
+                await _projectService.ListAsync(companyId, query.PageToken, query.ProjectFilter, query.MaxPageSize, cancellationToken);
             return Ok(result);
         }
         catch (Exception e) when(e is PageTokenEncodingException or PageTokenDecodingException)

@@ -1,6 +1,8 @@
 using LLCStroyCom.Domain.Entities;
 using LLCStroyCom.Domain.Exceptions;
+using LLCStroyCom.Domain.Models;
 using LLCStroyCom.Domain.Repositories;
+using LLCStroyCom.Domain.Specifications.Users;
 using LLCStroyCom.Infrastructure;
 using LLCStroyCom.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -498,6 +500,167 @@ public class UserRepositoryTests
         
         // Act
         var act = () => userRepository.GetAsync(userId, cancellationToken);
+        
+        // Assert
+        await Assert.ThrowsAsync<OperationCanceledException>(act);
+    }
+
+    [Fact]
+    public async Task ListCompanyEmployeesAsync_WhenNoItems_ShouldReturnPaginationResultWithEmptyItems()
+    {
+        // Arrange
+        var context = GetInMemoryDbContext();
+        IUserRepository userRepository = new UserRepository(context);
+
+        var companyId = Guid.NewGuid();
+        var specification = new ApplicationUserSpecification(new ApplicationUserFilter());
+        const int maxPageSize = 10;
+        const int page = 1;
+        
+        // Act
+        var result = await userRepository.ListCompanyEmployeesAsync(companyId, specification, maxPageSize, page);
+        
+        // Assert
+        Assert.IsType<PaginationResult<ApplicationUser>>(result);
+        Assert.Empty(result.Items);
+        Assert.Equal(page, result.Page);
+        Assert.Equal(maxPageSize, result.MaxPageSize);
+        Assert.Equal(0, result.PageCount);
+        Assert.Equal(0, result.TotalCount);
+        Assert.False(result.HasNextPage);
+        Assert.False(result.HasPreviousPage);
+    }
+
+    [Fact]
+    public async Task
+        ListCompanyEmployeesAsync_WhenItemsLessThanMaxPageSize_ShouldReturnPaginationResultWithNoNextPage()
+    {
+        // Arrange
+        var companyId = Guid.NewGuid();
+        var user = new ApplicationUser()
+        {
+            Id = Guid.NewGuid(),
+            Name = "name",
+            Email = "email@email.com",
+            HashPassword = "hash-password",
+            RoleId = 1,
+        };
+        user.SetCompany(companyId);
+        
+        var context = GetInMemoryDbContext();
+        await context.Users.AddAsync(user);
+        await context.SaveChangesAsync();
+        var repository = new UserRepository(context);
+        
+        var specification = new ApplicationUserSpecification(new ApplicationUserFilter());
+        const int maxPageSize = 2;
+        const int page = 1;
+        
+        // Act
+        var result = await repository.ListCompanyEmployeesAsync(companyId, specification, maxPageSize, page);
+        
+        // Assert
+        Assert.IsType<PaginationResult<ApplicationUser>>(result);
+        Assert.NotEmpty(result.Items);
+        Assert.Equal(1, result.TotalCount);
+        Assert.Equal(1, result.PageCount);
+        Assert.False(result.HasNextPage);
+        Assert.False(result.HasPreviousPage);
+    }
+
+    [Fact]
+    public async Task
+        ListCompanyEmployeesAsync_WhenItemsMoreThanMaxPageSize_ShouldReturnPaginationResultWithNextPage()
+    {
+        // Arrange
+        var companyId = Guid.NewGuid();
+
+        var user1 = new ApplicationUser()
+        {
+            Id = Guid.NewGuid(),
+            Name = "name",
+            Email = "email@email.com",
+            HashPassword = "hash-password",
+            RoleId = 1,
+        };
+        var user2 = new ApplicationUser()
+        {
+            Id = Guid.NewGuid(),
+            Name = "name1",
+            Email = "email1@email.com",
+            HashPassword = "hash-password",
+            RoleId = 1,
+        };
+        user1.SetCompany(companyId);
+        user2.SetCompany(companyId);
+        
+        var context = GetInMemoryDbContext();
+        await context.Users.AddRangeAsync(user1, user2);
+        await context.SaveChangesAsync();
+        var repository = new UserRepository(context);
+        
+        var specification = new ApplicationUserSpecification(new ApplicationUserFilter());
+        const int maxPageSize = 1;
+        const int page = 1;
+
+        // Act
+        var result = await repository.ListCompanyEmployeesAsync(companyId, specification, maxPageSize, page);
+        
+        // Assert
+        Assert.Equal(2, result.TotalCount);
+        Assert.Equal(2, result.PageCount);
+        Assert.True(result.HasNextPage);
+        Assert.False(result.HasPreviousPage);
+    }
+
+    [Fact]
+    public async Task
+        ListCompanyEmployeesAsync_WhenItemsCountEqualsMaxPageSize_ShouldReturnPaginationResultWithNoNextPage()
+    {
+        // Arrange
+        var companyId = Guid.NewGuid();
+        var user = new ApplicationUser()
+        {
+            Id = Guid.NewGuid(),
+            Name = "name",
+            Email = "email@email.com",
+            HashPassword = "hash-password",
+            RoleId = 1,
+        };
+        user.SetCompany(companyId);
+        
+        var context = GetInMemoryDbContext();
+        await context.Users.AddAsync(user);
+        await context.SaveChangesAsync();
+        var repository = new UserRepository(context);
+        
+        var specification = new ApplicationUserSpecification(new ApplicationUserFilter());
+        const int maxPageSize = 1;
+        const int page = 1;
+        
+        // Act
+        var result = await repository.ListCompanyEmployeesAsync(companyId, specification, maxPageSize, page);
+        
+        // Assert
+        Assert.NotEmpty(result.Items);
+        Assert.Equal(1, result.TotalCount);
+        Assert.Equal(1, result.PageCount);
+        Assert.False(result.HasNextPage);
+        Assert.False(result.HasPreviousPage);
+    }
+
+    [Fact]
+    public async Task ListCompanyEmployeesAsync_WhenOperationCanceled_ShouldThrowOperationCanceledException()
+    {
+        // Arrange
+        var context = GetInMemoryDbContext();
+        var repository = new UserRepository(context);
+
+        var cancellationToken = new CancellationToken(canceled: true);
+        
+        // Act
+        var act = () => repository.ListCompanyEmployeesAsync(Guid.NewGuid(), new ApplicationUserSpecification(new ApplicationUserFilter()),
+            1, 1, cancellationToken);
         
         // Assert
         await Assert.ThrowsAsync<OperationCanceledException>(act);

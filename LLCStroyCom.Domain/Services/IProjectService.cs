@@ -10,7 +10,7 @@ public interface IProjectService
 {
     Task<Result<ProjectDto>> GetAsync(Guid companyId, Guid projectId, CancellationToken cancellationToken = default);
 
-    Task<PaginatedProjectListResponse> ListAsync(string? plainPageToken, ProjectFilter filter, int maxPageSize,
+    Task<PaginatedProjectListResponse> ListAsync(Guid companyId, string? plainPageToken, ProjectFilter filter, int maxPageSize,
         CancellationToken cancellationToken = default);
 
     Task<Result<ProjectDto>> CreateAsync(Guid companyId, ProjectCreateRequest request, 

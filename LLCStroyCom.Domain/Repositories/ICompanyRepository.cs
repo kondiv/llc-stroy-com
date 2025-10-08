@@ -1,12 +1,14 @@
 ﻿using Ardalis.Specification;
 using LLCStroyCom.Domain.Entities;
+using LLCStroyCom.Domain.Models;
 using LLCStroyCom.Domain.Models.PageTokens;
+using LLCStroyCom.Domain.Specifications.Companies;
 
 namespace LLCStroyCom.Domain.Repositories;
 
 public interface ICompanyRepository
 {
-    Task<IEnumerable<Company>> ListAsync(List<ISpecification<Company>> specifications, int maxPageSize, IPageToken pageToken,
+    Task<PaginationResult<Company>> ListAsync(CompanySpecification specification, int maxPageSize, int page,
         CancellationToken cancellationToken = default);
     Task<Company> GetAsync(Guid id, CancellationToken cancellationToken = default);
     Task<Company> GetExtendedAsync(Guid id, CancellationToken cancellationToken = default);

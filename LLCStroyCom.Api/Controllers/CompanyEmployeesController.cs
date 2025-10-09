@@ -28,7 +28,7 @@ public class CompanyEmployeesController : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<ActionResult<EmployeeDto>> GetEmployeeAsync([FromRoute] Guid companyId, [FromRoute] Guid employeeId,
+    public async Task<ActionResult<EmployeeDto>> GetAsync([FromRoute] Guid companyId, [FromRoute] Guid employeeId,
         CancellationToken cancellationToken = default)
     {
         try
@@ -65,7 +65,7 @@ public class CompanyEmployeesController : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<ActionResult<Guid>> AddEmployeeAsync([FromRoute] Guid companyId, [FromRoute] Guid employeeId,
+    public async Task<ActionResult<Guid>> HireAsync([FromRoute] Guid companyId, [FromRoute] Guid employeeId,
         CancellationToken cancellationToken = default)
     {
         try
@@ -96,7 +96,7 @@ public class CompanyEmployeesController : ControllerBase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult> RemoveEmployeeAsync([FromRoute] Guid companyId, [FromRoute] Guid employeeId,
+    public async Task<ActionResult> RemoveAsync([FromRoute] Guid companyId, [FromRoute] Guid employeeId,
         CancellationToken cancellationToken = default)
     {
         try
@@ -121,7 +121,7 @@ public class CompanyEmployeesController : ControllerBase
     [HttpPatch("{employeeId:guid}")]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status405MethodNotAllowed)]
-    public ActionResult UpdateEmployeeAsync([FromRoute] Guid companyId, [FromRoute] Guid employeeId, JsonPatchDocument patchDocument,
+    public ActionResult UpdateAsync([FromRoute] Guid companyId, [FromRoute] Guid employeeId, JsonPatchDocument patchDocument,
         CancellationToken cancellationToken = default)
     {
         return StatusCode(StatusCodes.Status405MethodNotAllowed);

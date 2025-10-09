@@ -1,8 +1,10 @@
 ﻿using LLCStroyCom.Api.Controllers;
 using LLCStroyCom.Domain.Dto;
 using LLCStroyCom.Domain.Exceptions;
+using LLCStroyCom.Domain.Models;
 using LLCStroyCom.Domain.Requests;
 using LLCStroyCom.Domain.Services;
+using LLCStroyCom.Domain.Specifications.Companies;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -171,5 +173,43 @@ public class CompanyControllerTests
         
         // Assert
         Assert.IsType<NotFoundResult>(result);
+    }
+
+    [Fact]
+    public async Task ListAsync_WhenEmptyPaginationResult_ShouldReturnOk()
+    {
+        // Arrange
+        var paginationResult = new PaginationResult<CompanyDto>([], 1, 1, 0, 0);
+        _companyServiceMock
+            .Setup(x => x.ListAsync(It.IsAny<CompanySpecification>(), 1, 1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(paginationResult);
+        
+        // Act
+        var result = await _companyController.ListAsync(new CompanyFilter(), 1, 1);
+        
+        // Assert
+        var actualResult = Assert.IsType<OkObjectResult>(result.Result);
+        var value = Assert.IsType<PaginationResult<CompanyDto>>(actualResult.Value);
+        Assert.Empty(value.Items);
+    }
+
+    [Fact]
+    public async Task ListAsync_WhenNotEmptyPaginationResult_ShouldReturnOkObjectResult()
+    {
+        // Arrange
+        var paginationResult = new PaginationResult<CompanyDto>([new CompanyDto(Guid.NewGuid(), "Name")], 1,
+            1, 1, 1);
+        _companyServiceMock
+            .Setup(x => x.ListAsync(It.IsAny<CompanySpecification>(), 1, 1,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(paginationResult);
+        
+        // Act
+        var result = await _companyController.ListAsync(new CompanyFilter(), 1, 1);
+        
+        // Assert
+        var actualResult = Assert.IsType<OkObjectResult>(result.Result);
+        var value = Assert.IsType<PaginationResult<CompanyDto>>(actualResult.Value);
+        Assert.NotEmpty(value.Items);
     }
 }

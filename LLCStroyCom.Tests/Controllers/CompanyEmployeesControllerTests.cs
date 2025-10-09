@@ -301,4 +301,21 @@ public class CompanyEmployeesControllerTests
         var value = Assert.IsType<PaginationResult<EmployeeDto>>(actualResult.Value);
         Assert.NotEmpty(value.Items);
     }
+
+    [Fact]
+    public async Task ListAsync_WhenArgumentOutOfRange_ShouldReturnBadRequestObjectResult()
+    {
+        // Arrange
+        _companyServiceMock
+            .Setup(x => x.ListCompanyEmployeesAsync(It.IsAny<Guid>(), It.IsAny<ApplicationUserSpecification>(),
+                -23, 1, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ArgumentOutOfRangeException());
+        
+        // Act
+        var result = await _companyEmployeesController.ListAsync(Guid.NewGuid(), new ApplicationUserFilter(),
+            -23, 1);
+        
+        // Assert
+        Assert.IsType<BadRequestObjectResult>(result.Result);
+    }
 }

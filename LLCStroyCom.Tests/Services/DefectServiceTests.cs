@@ -369,4 +369,23 @@ public class DefectServiceTests
         Assert.Equal(repositoryPaginationResult.HasNextPage, result.HasNextPage);
         Assert.Equal(repositoryPaginationResult.HasPreviousPage, result.HasPreviousPage);
     }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public async Task ListAsync_WhenArgumentOutOfRange_ShouldThrowArgumentOutOfRangeException(int invalidPage)
+    {
+        // Arrange
+        _defectRepositoryMock
+            .Setup(x => x.ListAsync(It.IsAny<Guid>(), It.IsAny<DefectSpecification>(),
+                1, invalidPage, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ArgumentOutOfRangeException());
+        
+        // Act
+        var act = () => _defectService.ListAsync(Guid.NewGuid(), new DefectSpecification(new DefectFilter()),
+            1, invalidPage);
+        
+        // Assert
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(act);
+    }
 }

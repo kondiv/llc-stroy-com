@@ -40,7 +40,7 @@ public sealed class DefectService : IDefectService
     public async Task<PaginationResult<DefectDto>> ListAsync(Guid projectId, DefectSpecification specification, int maxPageSize, int page,
         CancellationToken cancellationToken = default)
     {
-        var defectPaginatedResult = await _defectRepository.ListAsync(projectId, specification, page, page, cancellationToken);
+        var defectPaginatedResult = await _defectRepository.ListAsync(projectId, specification, maxPageSize, page, cancellationToken);
         
         var defectDtoList = defectPaginatedResult.Items.Select(d => _mapper.Map<DefectDto>(d)).ToList();
         

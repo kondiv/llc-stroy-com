@@ -56,6 +56,15 @@ public sealed class UserRepository : IUserRepository
     public async Task<PaginationResult<ApplicationUser>> ListCompanyEmployeesAsync(Guid companyId, ApplicationUserSpecification specification, int maxPageSize, int page,
         CancellationToken cancellationToken = default)
     {
+        if (maxPageSize is <= 0 or > 45)
+        {
+            throw new ArgumentOutOfRangeException(nameof(maxPageSize), maxPageSize, "The MaxSageSize must be greater than zero.");
+        }
+        if (page <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(page), page, "The Page must be greater than zero.");
+        }
+        
         var query = _context.Users.Where(u => u.CompanyId == companyId).AsQueryable();
         
         var filteredQuery = SpecificationEvaluator.Default.GetQuery(query, specification);

@@ -49,11 +49,28 @@ public class ProjectDefectsController : ControllerBase
 
     [Authorize]
     [HttpGet]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<PaginationResult<DefectDto>>> ListAsync([FromRoute]Guid projectId, [FromQuery]DefectFilter filter,
-        int maxPageSize, int page, CancellationToken cancellationToken = default)
+        [FromQuery]int maxPageSize = 20, [FromQuery]int page = 1, CancellationToken cancellationToken = default)
     {
-        var specification = new DefectSpecification(filter);
-        return Ok(await _defectService.ListAsync(projectId, specification, maxPageSize, page, cancellationToken));
+        _logger.LogInformation("Requesting defects of project {projectId}\nMax page size: {maxPageSize}\nPage: {page}",
+            projectId, maxPageSize, page);
+
+        try
+        {
+            var specification = new DefectSpecification(filter);
+
+            var result = await _defectService.ListAsync(projectId, specification, maxPageSize, page, cancellationToken);
+        
+            return Ok(result);
+        }
+        catch (ArgumentOutOfRangeException e)
+        {
+            _logger.LogError(e, e.Message);
+            return BadRequest(e.Message);
+        }
     }
 
     [Authorize]

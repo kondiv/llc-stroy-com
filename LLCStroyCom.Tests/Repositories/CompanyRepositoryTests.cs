@@ -486,4 +486,33 @@ public class CompanyRepositoryTests
         // Assert
         await Assert.ThrowsAsync<OperationCanceledException>(act);
     }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    [InlineData(46)]
+    public async Task ListAsync_WhenMaxPageSizeLessOrEqualToZero_ShouldThrowArgumentOutOfRangeException(int invalidMaxPageSize)
+    {
+        // Arrange
+        
+        // Act
+        var act = () => _companyRepository.ListAsync(new CompanySpecification(new CompanyFilter()), invalidMaxPageSize, 10);
+        
+        // Assert
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(act);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public async Task ListAsync_WhenPageLessOrEqualToZeroOrMoreThan45_ShouldThrowArgumentOutOfRangeException(int invalidPage)
+    {
+        // Arrange
+        
+        // Act
+        var act = () => _companyRepository.ListAsync(new CompanySpecification(new CompanyFilter()), invalidPage, 10);
+        
+        // Assert
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(act);
+    }
 }

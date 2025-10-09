@@ -582,4 +582,42 @@ public class CompanyServiceTests
         Assert.IsType<PaginationResult<EmployeeDto>>(result);
         Assert.Empty(result.Items);
     }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public async Task ListAsync_WhenArgumentOutOfRange_ShouldThrowArgumentOutOfRangeException(int invalidPage)
+    {
+        // Arrange
+        _companyRepositoryMock
+            .Setup(x => x.ListAsync(It.IsAny<CompanySpecification>(), 1, invalidPage,
+                It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ArgumentOutOfRangeException());
+        
+        // Act
+        var act = () => _companyService.ListAsync(new CompanySpecification(new CompanyFilter()),
+            1, invalidPage);
+        
+        // Assert
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(act);
+    }
+    
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public async Task ListCompanyEmployeesAsync_WhenArgumentOutOfRange_ShouldThrowArgumentOutOfRangeException(int invalidPage)
+    {
+        // Arrange
+        _userRepositoryMock
+            .Setup(x => x.ListCompanyEmployeesAsync(It.IsAny<Guid>(), It.IsAny<ApplicationUserSpecification>(),
+                1, invalidPage, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ArgumentOutOfRangeException());
+        
+        // Act
+        var act = () => _companyService.ListCompanyEmployeesAsync(Guid.NewGuid(), new ApplicationUserSpecification(new ApplicationUserFilter()),
+            1, invalidPage);
+        
+        // Assert
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(act);
+    }
 }

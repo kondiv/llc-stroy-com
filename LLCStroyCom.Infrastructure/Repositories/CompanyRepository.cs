@@ -1,9 +1,7 @@
-﻿using Ardalis.Specification;
-using Ardalis.Specification.EntityFrameworkCore;
+﻿using Ardalis.Specification.EntityFrameworkCore;
 using LLCStroyCom.Domain.Entities;
 using LLCStroyCom.Domain.Exceptions;
 using LLCStroyCom.Domain.Models;
-using LLCStroyCom.Domain.Models.PageTokens;
 using LLCStroyCom.Domain.Repositories;
 using LLCStroyCom.Domain.Specifications.Companies;
 using Microsoft.EntityFrameworkCore;
@@ -22,6 +20,15 @@ public sealed class CompanyRepository : ICompanyRepository
     public async Task<PaginationResult<Company>> ListAsync(CompanySpecification specification, int maxPageSize, int page,
         CancellationToken cancellationToken = default)
     {
+        if (maxPageSize is <= 0 or > 45)
+        {
+            throw new ArgumentOutOfRangeException(nameof(maxPageSize), maxPageSize, "The MaxSageSize must be greater than zero.");
+        }
+        if (page <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(page), page, "The Page must be greater than zero.");
+        }
+        
         var query = SpecificationEvaluator.Default.GetQuery(_context.Companies.AsQueryable(), specification);
 
         var totalCount = await query.CountAsync(cancellationToken);

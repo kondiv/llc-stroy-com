@@ -47,16 +47,27 @@ public class CompanyEmployeesController : ControllerBase
     [Authorize]
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<PaginationResult<EmployeeDto>>> ListAsync([FromRoute] Guid companyId,
         [FromQuery]ApplicationUserFilter filter,
-        [FromQuery]int maxPageSize, [FromQuery]int page, CancellationToken cancellationToken = default)
+        [FromQuery]int maxPageSize = 20, [FromQuery]int page = 1, CancellationToken cancellationToken = default)
     {
-        var specification = new ApplicationUserSpecification(filter);
+        _logger.LogInformation("Requesting list of employees from company {companyId}\nMax page size: {maxPageSize}\nPage: {page}",
+            companyId, maxPageSize, page);
+        try
+        {
+            var specification = new ApplicationUserSpecification(filter);
         
-        var result = await _companyService.ListCompanyEmployeesAsync(companyId, specification, maxPageSize, page, cancellationToken);
+            var result = await _companyService.ListCompanyEmployeesAsync(companyId, specification, maxPageSize, page, cancellationToken);
 
-        return Ok(result);
+            return Ok(result);
+        }
+        catch (ArgumentOutOfRangeException e)
+        {
+            _logger.LogError(e, e.Message);
+            return BadRequest(e.Message);
+        }
     }
     
     [Authorize]

@@ -33,6 +33,15 @@ public sealed class DefectRepository : IDefectRepository
     public async Task<PaginationResult<Defect>> ListAsync(Guid projectId, DefectSpecification specification, int maxPageSize, int page,
         CancellationToken cancellationToken = default)
     {
+        if (maxPageSize is <= 0 or > 45)
+        {
+            throw new ArgumentOutOfRangeException(nameof(maxPageSize), maxPageSize, "The MaxSageSize must be greater than zero.");
+        }
+        if (page <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(page), page, "The Page must be greater than zero.");
+        }
+        
         var query = _context.Defects.Where(d => d.ProjectId == projectId).AsQueryable();
 
         var filteredQuery = SpecificationEvaluator.Default.GetQuery(query, specification);

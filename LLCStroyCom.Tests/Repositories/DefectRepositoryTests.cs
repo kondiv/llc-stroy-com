@@ -389,4 +389,35 @@ public class DefectRepositoryTests
         // Assert
         await Assert.ThrowsAsync<OperationCanceledException>(act);
     }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    [InlineData(46)]
+    public async Task ListAsync_WhenMaxPageSizeLessOrEqualToZeroOrMoreThan45_ShouldThrowArgumentOutOfRangeException(int invalidMaxPageSize)
+    {
+        // Arrange
+        
+        // Act
+        var act = () => _defectRepository.ListAsync(Guid.NewGuid(), new DefectSpecification(new DefectFilter()),
+            invalidMaxPageSize, 10);
+        
+        // assert
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(act);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public async Task ListAsync_WhenPageLessOrEqualToZero_ShouldThrowArgumentOutOfRangeException(int invalidPage)
+    {
+        // Arrange
+        
+        // Act
+        var act = () => _defectRepository.ListAsync(Guid.NewGuid(), new DefectSpecification(new DefectFilter()),
+            5, invalidPage);
+        
+        // Assert
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(act);
+    }
 }

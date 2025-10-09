@@ -212,4 +212,20 @@ public class CompanyControllerTests
         var value = Assert.IsType<PaginationResult<CompanyDto>>(actualResult.Value);
         Assert.NotEmpty(value.Items);
     }
+
+    [Fact]
+    public async Task ListAsync_WhenArgumentOutOfRange_ShouldReturnBadRequestObjectResult()
+    {
+        // Arrange
+        _companyServiceMock
+            .Setup(x => x.ListAsync(It.IsAny<CompanySpecification>(), -23, 1,
+                It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ArgumentOutOfRangeException());
+        
+        // Act
+        var result = await _companyController.ListAsync(new CompanyFilter(), -23, 1);
+        
+        // Assert
+        Assert.IsType<BadRequestObjectResult>(result.Result);
+    }
 }

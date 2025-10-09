@@ -106,7 +106,7 @@ public class ProjectServiceTests
         var projectFilter = new ProjectFilter();
         ProjectPageToken? pageToken = null;
         int maxPageSize = 10;
-        var specification = new ProjectSpecification(projectFilter, pageToken, maxPageSize);
+        var specification = new ProjectSpecification(Guid.NewGuid(), projectFilter, pageToken, maxPageSize);
 
         _projectRepositoryMock
             .Setup(r => r.ListAsync(specification, It.IsAny<CancellationToken>()))
@@ -115,7 +115,7 @@ public class ProjectServiceTests
         string? plainPageToken = null;
         
         // Act
-        var result = await _projectService.ListAsync(plainPageToken, projectFilter, maxPageSize);
+        var result = await _projectService.ListAsync(Guid.NewGuid(), plainPageToken, projectFilter, maxPageSize);
         
         // Assert
         Assert.IsType<PaginatedProjectListResponse>(result);
@@ -136,7 +136,7 @@ public class ProjectServiceTests
             .ReturnsAsync(new List<Project>() { new Project() { Name = "Project1" } });
         
         // Act
-        var result = await _projectService.ListAsync(null, projectFilter, maxPageSize);
+        var result = await _projectService.ListAsync(Guid.NewGuid(), null, projectFilter, maxPageSize);
         
         // Assert
         Assert.IsType<PaginatedProjectListResponse>(result);
@@ -160,7 +160,7 @@ public class ProjectServiceTests
             .Returns("encoded-page-token");
         
         // Act
-        var result = await _projectService.ListAsync(null, projectFilter, maxPageSize);
+        var result = await _projectService.ListAsync(Guid.NewGuid(), null, projectFilter, maxPageSize);
         
         // Assert
         Assert.IsType<PaginatedProjectListResponse>(result);
@@ -195,7 +195,7 @@ public class ProjectServiceTests
             .Returns(pageToken);
         
         // Act
-        var result = await _projectService.ListAsync("old-encoded-page-token",  projectFilter, maxPageSize);
+        var result = await _projectService.ListAsync(Guid.NewGuid(), "old-encoded-page-token",  projectFilter, maxPageSize);
         
         // Assert
         Assert.IsType<PaginatedProjectListResponse>(result);
@@ -220,7 +220,7 @@ public class ProjectServiceTests
             .ThrowsAsync(new OperationCanceledException());
         
         // Act
-        var act = () => _projectService.ListAsync(null, projectFilter, maxPageSize, cancellationToken);
+        var act = () => _projectService.ListAsync(Guid.NewGuid(), null, projectFilter, maxPageSize, cancellationToken);
         
         // Assert
         await Assert.ThrowsAsync<OperationCanceledException>(act);
@@ -239,7 +239,7 @@ public class ProjectServiceTests
             .Throws(PageTokenDecodingException.ForToken(nameof(ProjectPageToken)));
         
         // Act
-        var act = () => _projectService.ListAsync(invalidPageToken, projectFilter, maxPageSize);
+        var act = () => _projectService.ListAsync(Guid.NewGuid(), invalidPageToken, projectFilter, maxPageSize);
         
         // Assert
         await Assert.ThrowsAsync<PageTokenDecodingException>(act);
@@ -261,7 +261,7 @@ public class ProjectServiceTests
             .Throws(PageTokenEncodingException.ForToken(nameof(ProjectPageToken)));
         
         // Act
-        var act = () => _projectService.ListAsync(null, projectFilter, maxPageSize);
+        var act = () => _projectService.ListAsync(Guid.NewGuid(), null, projectFilter, maxPageSize);
         
         // Assert
         await Assert.ThrowsAsync<PageTokenEncodingException>(act);

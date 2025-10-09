@@ -4,9 +4,12 @@ using LLCStroyCom.Application.Services;
 using LLCStroyCom.Domain.Dto;
 using LLCStroyCom.Domain.Entities;
 using LLCStroyCom.Domain.Exceptions;
+using LLCStroyCom.Domain.Models;
 using LLCStroyCom.Domain.Repositories;
 using LLCStroyCom.Domain.Requests;
 using LLCStroyCom.Domain.Services;
+using LLCStroyCom.Domain.Specifications.Companies;
+using LLCStroyCom.Domain.Specifications.Users;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.Extensions.Logging;
@@ -456,8 +459,165 @@ public class CompanyServiceTests
         
         // Act
         var act = () => _companyService.GetEmployeeAsync(Guid.NewGuid(), Guid.NewGuid(), cancellationToken);
+
+        // Assert
+        await Assert.ThrowsAsync<OperationCanceledException>(act);
+    }
+
+    [Fact]
+    public async Task ListAsync_WhenPaginatedResultNotEmpty_ShouldReturnNotEmptyPaginatedResultOfEntityDto()
+    {
+        // Arrange
+        var repositoryPaginatedResult = new PaginationResult<Company>([new Company() { Name = "name" }], 1, 1, 1, 1);
+        _companyRepositoryMock
+            .Setup(x => x.ListAsync(It.IsAny<CompanySpecification>(), 1, 1,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(repositoryPaginatedResult);
+        
+        // Act
+        var result = await _companyService.ListAsync(new CompanySpecification(new CompanyFilter()), 1, 1);
+        
+        // Assert
+        Assert.IsType<PaginationResult<CompanyDto>>(result);
+        Assert.NotEmpty(result.Items);
+    }
+
+    [Fact]
+    public async Task ListAsync_WhenPaginatedResultEmpty_ShouldReturnEmptyPaginatedResultOfEntityDto()
+    {
+        // Arrange
+        var repositoryPaginatedResult = new PaginationResult<Company>([], 1, 1, 0, 0);
+        _companyRepositoryMock
+            .Setup(x => x.ListAsync(It.IsAny<CompanySpecification>(), 1, 1,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(repositoryPaginatedResult);
+        
+        // Act
+        var result = await _companyService.ListAsync(new CompanySpecification(new CompanyFilter()), 1, 1);
+        
+        // Assert
+        Assert.IsType<PaginationResult<CompanyDto>>(result);
+        Assert.Empty(result.Items);
+    }
+    
+    [Fact]
+    public async Task ListAsync_WhenOperationCanceled_ShouldThrowOperationCanceledException()
+    {
+        // Arrange
+        var cancellationToken = new CancellationToken(canceled: true);
+        _companyRepositoryMock
+            .Setup(x => x.ListAsync(It.IsAny<CompanySpecification>(), 1, 1, 
+                It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new OperationCanceledException(cancellationToken));
+        
+        // Act
+        var act = () => _companyService.ListAsync(new CompanySpecification(new CompanyFilter()), 1, 
+            1, cancellationToken);
         
         // Assert
         await Assert.ThrowsAsync<OperationCanceledException>(act);
+    }
+
+    [Fact]
+    public async Task ListCompanyEmployeesAsync_WhenOperationCanceled_ShouldThrowOperationCanceledException()
+    {
+        // Arrange
+        var cancellationToken = new CancellationToken(canceled: true);
+        
+        _userRepositoryMock
+            .Setup(x => x.ListCompanyEmployeesAsync(It.IsAny<Guid>(), It.IsAny<ApplicationUserSpecification>(),
+                1,1, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new OperationCanceledException(cancellationToken));
+        
+        // Act
+        var act = () => _companyService.ListCompanyEmployeesAsync(Guid.NewGuid(),
+            new ApplicationUserSpecification(new ApplicationUserFilter()), 1, 1,
+            cancellationToken);
+        
+        // Assert
+        await Assert.ThrowsAsync<OperationCanceledException>(act);
+    }
+
+    [Fact]
+    public async Task
+        ListCompanyEmployeesAsync_WhenPaginatedResultNotEmpty_ShouldReturnNotEmptyPaginatedResultOfEntityDto()
+    {
+        // Arrange
+        var repositoryPaginationResult = new PaginationResult<ApplicationUser>([new ApplicationUser() { Name = "name" }], 1, 1,
+            1, 1);
+        
+        _userRepositoryMock
+            .Setup(x => x.ListCompanyEmployeesAsync(It.IsAny<Guid>(), It.IsAny<ApplicationUserSpecification>(),
+                1,1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(repositoryPaginationResult);
+        
+        // Act
+        var result = await _companyService.ListCompanyEmployeesAsync(Guid.NewGuid(),
+            new ApplicationUserSpecification(new ApplicationUserFilter()),
+            1, 1);
+        
+        // Assert
+        Assert.IsType<PaginationResult<EmployeeDto>>(result);
+        Assert.NotEmpty(result.Items);
+    }
+
+    [Fact]
+    public async Task ListCompanyEmployeesAsync_WhenPaginatedResultEmpty_ShouldReturnEmptyPaginatedResultOfEntityDto()
+    {
+        // Arrange
+        var repositoryPaginationResult = new PaginationResult<ApplicationUser>([], 1, 1,
+            1, 1);
+        
+        _userRepositoryMock
+            .Setup(x => x.ListCompanyEmployeesAsync(It.IsAny<Guid>(), It.IsAny<ApplicationUserSpecification>(),
+                1,1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(repositoryPaginationResult);
+        
+        // Act
+        var result = await _companyService.ListCompanyEmployeesAsync(Guid.NewGuid(),
+            new ApplicationUserSpecification(new ApplicationUserFilter()),
+            1, 1);
+        
+        // Assert
+        Assert.IsType<PaginationResult<EmployeeDto>>(result);
+        Assert.Empty(result.Items);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public async Task ListAsync_WhenArgumentOutOfRange_ShouldThrowArgumentOutOfRangeException(int invalidPage)
+    {
+        // Arrange
+        _companyRepositoryMock
+            .Setup(x => x.ListAsync(It.IsAny<CompanySpecification>(), 1, invalidPage,
+                It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ArgumentOutOfRangeException());
+        
+        // Act
+        var act = () => _companyService.ListAsync(new CompanySpecification(new CompanyFilter()),
+            1, invalidPage);
+        
+        // Assert
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(act);
+    }
+    
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public async Task ListCompanyEmployeesAsync_WhenArgumentOutOfRange_ShouldThrowArgumentOutOfRangeException(int invalidPage)
+    {
+        // Arrange
+        _userRepositoryMock
+            .Setup(x => x.ListCompanyEmployeesAsync(It.IsAny<Guid>(), It.IsAny<ApplicationUserSpecification>(),
+                1, invalidPage, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ArgumentOutOfRangeException());
+        
+        // Act
+        var act = () => _companyService.ListCompanyEmployeesAsync(Guid.NewGuid(), new ApplicationUserSpecification(new ApplicationUserFilter()),
+            1, invalidPage);
+        
+        // Assert
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(act);
     }
 }

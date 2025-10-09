@@ -1,7 +1,9 @@
-using LLCStroyCom.Domain.Entities;
+﻿using LLCStroyCom.Domain.Entities;
 using LLCStroyCom.Domain.Enums;
+using LLCStroyCom.Domain.Models;
 using LLCStroyCom.Domain.Repositories;
 using LLCStroyCom.Domain.ResultPattern.Errors;
+using LLCStroyCom.Domain.Specifications.Defects;
 using LLCStroyCom.Infrastructure;
 using LLCStroyCom.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -258,5 +260,164 @@ public class DefectRepositoryTests
         
         // Assert
         await Assert.ThrowsAsync<OperationCanceledException>(act);
+    }
+
+    [Fact]
+    public async Task ListAsync_WhenNoElementsFound_ShouldReturnEmptyPaginationResult()
+    {
+        // Arrange
+        var specification = new DefectSpecification(new DefectFilter());
+        var projectId = Guid.NewGuid();
+        var maxPageSize = 2;
+        var page = 1;
+        
+        // Act
+        var result = await _defectRepository.ListAsync(projectId, specification, maxPageSize, page);
+        
+        // Assert
+        Assert.IsType<PaginationResult<Defect>>(result);
+        Assert.Empty(result.Items);
+        Assert.Equal(page, result.Page);
+        Assert.Equal(maxPageSize, result.MaxPageSize);
+        Assert.Equal(0, result.TotalCount);
+        Assert.Equal(0, result.PageCount);
+        Assert.False(result.HasNextPage);
+        Assert.False(result.HasPreviousPage);
+    }
+
+    [Fact]
+    public async Task ListAsync_WhenElementsLessThanMaxPageSize_ShouldReturnPaginationResultWithoutNextPage()
+    {
+        // Arrange
+        var specification = new DefectSpecification(new DefectFilter());
+        var projectId = Guid.NewGuid();
+        var maxPageSize = 2;
+        var page = 1;
+        
+        var context = GetInMemoryDbContext();
+        await context.Defects.AddAsync(new Defect()
+            { Name = "name", Description = "description", ProjectId = projectId });
+        await context.SaveChangesAsync();
+
+        var repository = new DefectRepository(context);
+        
+        // Act
+        var result = await repository.ListAsync(projectId, specification, maxPageSize, page);
+        
+        // Assert
+        Assert.IsType<PaginationResult<Defect>>(result);
+        Assert.NotEmpty(result.Items);
+        Assert.Equal(page, result.Page);
+        Assert.Equal(1, result.TotalCount);
+        Assert.Equal(1, result.PageCount);
+        Assert.Equal(maxPageSize, result.MaxPageSize);
+        Assert.False(result.HasNextPage);
+        Assert.False(result.HasPreviousPage);
+    }
+
+    [Fact]
+    public async Task ListAsync_WhenElementsMoreThanMaxPageSize_ShouldReturnPaginationResultWithNextPage()
+    {
+        // Arrange
+        var specification = new DefectSpecification(new DefectFilter());
+        var projectId = Guid.NewGuid();
+        var maxPageSize = 1;
+        var page = 1;
+        
+        var context = GetInMemoryDbContext();
+        await context.Defects.AddRangeAsync(
+            new Defect() { Name = "name", Description = "desc", ProjectId = projectId },
+            new Defect() { Name = "name1", Description = "desc", ProjectId = projectId });
+        await context.SaveChangesAsync();
+
+        var repository = new DefectRepository(context);
+        
+        // Act
+        var result = await repository.ListAsync(projectId, specification, maxPageSize, page);
+        
+        // Assert
+        Assert.IsType<PaginationResult<Defect>>(result);
+        Assert.NotEmpty(result.Items);
+        Assert.Equal(2, result.TotalCount);
+        Assert.Equal(2, result.PageCount);
+        Assert.Equal(page, result.Page);
+        Assert.Equal(maxPageSize, result.MaxPageSize);
+        Assert.True(result.HasNextPage);
+        Assert.False(result.HasPreviousPage);
+    }
+
+    [Fact]
+    public async Task ListAsync_WhenFilterByName_ShouldReturnValidPaginationResult()
+    {
+        // Arrange
+        var defectFilter = new DefectFilter() { Name = "name" };
+        var specification = new DefectSpecification(defectFilter);
+        var projectId = Guid.NewGuid();
+        var maxPageSize = 2;
+        var page = 1;
+        
+        var context = GetInMemoryDbContext();
+        await context.AddRangeAsync(
+            new Defect() { Name = "name", Description = "desc", ProjectId = projectId },
+            new Defect() { Name = "bibop", Description = "desc", ProjectId = projectId });
+        await context.SaveChangesAsync();
+        
+        var repository = new DefectRepository(context);
+        
+        // Act
+        var result = await repository.ListAsync(projectId, specification, maxPageSize, page);
+        
+        // Assert
+        Assert.IsType<PaginationResult<Defect>>(result);
+        Assert.NotEmpty(result.Items);
+        Assert.Equal(1, result.TotalCount);
+        Assert.Equal(1, result.PageCount);
+        Assert.False(result.HasNextPage);
+        Assert.False(result.HasPreviousPage);
+    }
+
+    [Fact]
+    public async Task ListAsync_WhenOperationCanceled_ShouldThrowOperationCanceledException()
+    {
+        // Arrange
+        var cancellationToken = new CancellationToken(canceled: true);
+        
+        // Act
+        var act = () => _defectRepository.ListAsync(Guid.NewGuid(),
+            new DefectSpecification(new DefectFilter()), 1, 1, cancellationToken);
+        
+        // Assert
+        await Assert.ThrowsAsync<OperationCanceledException>(act);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    [InlineData(46)]
+    public async Task ListAsync_WhenMaxPageSizeLessOrEqualToZeroOrMoreThan45_ShouldThrowArgumentOutOfRangeException(int invalidMaxPageSize)
+    {
+        // Arrange
+        
+        // Act
+        var act = () => _defectRepository.ListAsync(Guid.NewGuid(), new DefectSpecification(new DefectFilter()),
+            invalidMaxPageSize, 10);
+        
+        // assert
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(act);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public async Task ListAsync_WhenPageLessOrEqualToZero_ShouldThrowArgumentOutOfRangeException(int invalidPage)
+    {
+        // Arrange
+        
+        // Act
+        var act = () => _defectRepository.ListAsync(Guid.NewGuid(), new DefectSpecification(new DefectFilter()),
+            5, invalidPage);
+        
+        // Assert
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(act);
     }
 }

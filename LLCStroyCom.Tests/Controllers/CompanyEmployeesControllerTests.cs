@@ -1,7 +1,9 @@
 using LLCStroyCom.Api.Controllers;
 using LLCStroyCom.Domain.Dto;
 using LLCStroyCom.Domain.Exceptions;
+using LLCStroyCom.Domain.Models;
 using LLCStroyCom.Domain.Services;
+using LLCStroyCom.Domain.Specifications.Users;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -34,7 +36,7 @@ public class CompanyEmployeesControllerTests
             .ReturnsAsync(employeeId);
         
         // Act
-        var result = await _companyEmployeesController.AddEmployeeAsync(companyId, employeeId);
+        var result = await _companyEmployeesController.HireAsync(companyId, employeeId);
         
         // Assert
         var actualResult = Assert.IsType<CreatedAtRouteResult>(result.Result);
@@ -53,7 +55,7 @@ public class CompanyEmployeesControllerTests
             .ThrowsAsync(CouldNotFindUser.WithId(employeeId));
         
         // Act
-        var result = await _companyEmployeesController.AddEmployeeAsync(companyId, employeeId);
+        var result = await _companyEmployeesController.HireAsync(companyId, employeeId);
         
         // Assert
         var actualResult = Assert.IsType<NotFoundObjectResult>(result.Result);
@@ -72,7 +74,7 @@ public class CompanyEmployeesControllerTests
             .ThrowsAsync(CouldNotFindCompany.WithId(employeeId));
         
         // Act
-        var result = await _companyEmployeesController.AddEmployeeAsync(companyId, employeeId);
+        var result = await _companyEmployeesController.HireAsync(companyId, employeeId);
         
         // Assert
         var actualResult = Assert.IsType<NotFoundObjectResult>(result.Result);
@@ -91,7 +93,7 @@ public class CompanyEmployeesControllerTests
             .ThrowsAsync(AlreadyWorks.InCompany(Guid.NewGuid()));
         
         // Act
-        var result = await _companyEmployeesController.AddEmployeeAsync(companyId, employeeId);
+        var result = await _companyEmployeesController.HireAsync(companyId, employeeId);
         
         // Assert
         var actualResult = Assert.IsType<ConflictObjectResult>(result.Result);
@@ -110,7 +112,7 @@ public class CompanyEmployeesControllerTests
             .ThrowsAsync(new DbUpdateConcurrencyException());
         
         // Act
-        var result = await _companyEmployeesController.AddEmployeeAsync(companyId, employeeId);
+        var result = await _companyEmployeesController.HireAsync(companyId, employeeId);
         
         // Assert
         Assert.IsType<ConflictObjectResult>(result.Result);
@@ -124,7 +126,7 @@ public class CompanyEmployeesControllerTests
         var employeeId = Guid.NewGuid();
         
         // Act
-        var result = await _companyEmployeesController.RemoveEmployeeAsync(companyId, employeeId);
+        var result = await _companyEmployeesController.RemoveAsync(companyId, employeeId);
         
         // Assert
         Assert.IsType<NoContentResult>(result);
@@ -142,7 +144,7 @@ public class CompanyEmployeesControllerTests
             .ThrowsAsync(CouldNotFindUser.WithId(employeeId));
         
         // Act
-        var result = await _companyEmployeesController.RemoveEmployeeAsync(companyId, employeeId);
+        var result = await _companyEmployeesController.RemoveAsync(companyId, employeeId);
         
         // Assert
         Assert.IsType<NotFoundResult>(result);
@@ -160,7 +162,7 @@ public class CompanyEmployeesControllerTests
             .ThrowsAsync(CouldNotFindCompany.WithId(companyId));
         
         // Act
-        var result = await _companyEmployeesController.RemoveEmployeeAsync(companyId, employeeId);
+        var result = await _companyEmployeesController.RemoveAsync(companyId, employeeId);
         
         // Assert
         Assert.IsType<NotFoundResult>(result);
@@ -178,7 +180,7 @@ public class CompanyEmployeesControllerTests
             .ThrowsAsync(new DbUpdateConcurrencyException());
         
         // Act
-        var result = await _companyEmployeesController.RemoveEmployeeAsync(companyId, employeeId);
+        var result = await _companyEmployeesController.RemoveAsync(companyId, employeeId);
         
         // Assert
         Assert.IsType<ConflictObjectResult>(result);
@@ -193,7 +195,7 @@ public class CompanyEmployeesControllerTests
         var patchDocument = new JsonPatchDocument();
         
         // Act
-        var result = _companyEmployeesController.UpdateEmployeeAsync(companyId, employeeId, patchDocument);
+        var result = _companyEmployeesController.UpdateAsync(companyId, employeeId, patchDocument);
         
         // Assert
         var actualResult = Assert.IsType<StatusCodeResult>(result);
@@ -224,10 +226,10 @@ public class CompanyEmployeesControllerTests
         
         _companyServiceMock
             .Setup(x => x.GetEmployeeAsync(companyId, employeeId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new EmployeeDto() { Name = "name" });
+            .ReturnsAsync(new EmployeeDto("name"));
         
         // Act
-        var result = await _companyEmployeesController.GetEmployeeAsync(companyId, employeeId);
+        var result = await _companyEmployeesController.GetAsync(companyId, employeeId);
         
         // Assert
         Assert.IsType<ActionResult<EmployeeDto>>(result);
@@ -254,9 +256,66 @@ public class CompanyEmployeesControllerTests
             .ThrowsAsync(CouldNotFindUser.WithId(employeeId));
         
         // Act
-        var result = await _companyEmployeesController.GetEmployeeAsync(companyId, employeeId);
+        var result = await _companyEmployeesController.GetAsync(companyId, employeeId);
         
         // Assert
         Assert.IsType<NotFoundObjectResult>(result.Result);
+    }
+
+    [Fact]
+    public async Task ListAsync_WhenPaginationResultEmpty_ShouldReturnOkObjectResult()
+    {
+        // Arrange
+        var paginationResult = new PaginationResult<EmployeeDto>([], 1, 1, 0, 0);
+        _companyServiceMock
+            .Setup(x => x.ListCompanyEmployeesAsync(It.IsAny<Guid>(), It.IsAny<ApplicationUserSpecification>(),
+                1, 1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(paginationResult);
+        
+        // Act
+        var result = await _companyEmployeesController.ListAsync(Guid.NewGuid(), new ApplicationUserFilter(),
+            1, 1);
+        
+        // Assert
+        var actualResult = Assert.IsType<OkObjectResult>(result.Result);
+        var value = Assert.IsType<PaginationResult<EmployeeDto>>(actualResult.Value);
+        Assert.Empty(value.Items);
+    }
+
+    [Fact]
+    public async Task ListAsync_WhenPaginationResultNotEmpty_ShouldReturnOkObjectResult()
+    {
+        // Arrange
+        var paginationResult = new PaginationResult<EmployeeDto>([new EmployeeDto("name")], 1, 1, 1, 1);
+        _companyServiceMock
+            .Setup(x => x.ListCompanyEmployeesAsync(It.IsAny<Guid>(), It.IsAny<ApplicationUserSpecification>(),
+                1, 1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(paginationResult);
+        
+        // Act
+        var result = await _companyEmployeesController.ListAsync(Guid.NewGuid(), new ApplicationUserFilter(),
+            1, 1);
+        
+        // Assert
+        var actualResult = Assert.IsType<OkObjectResult>(result.Result);
+        var value = Assert.IsType<PaginationResult<EmployeeDto>>(actualResult.Value);
+        Assert.NotEmpty(value.Items);
+    }
+
+    [Fact]
+    public async Task ListAsync_WhenArgumentOutOfRange_ShouldReturnBadRequestObjectResult()
+    {
+        // Arrange
+        _companyServiceMock
+            .Setup(x => x.ListCompanyEmployeesAsync(It.IsAny<Guid>(), It.IsAny<ApplicationUserSpecification>(),
+                -23, 1, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ArgumentOutOfRangeException());
+        
+        // Act
+        var result = await _companyEmployeesController.ListAsync(Guid.NewGuid(), new ApplicationUserFilter(),
+            -23, 1);
+        
+        // Assert
+        Assert.IsType<BadRequestObjectResult>(result.Result);
     }
 }

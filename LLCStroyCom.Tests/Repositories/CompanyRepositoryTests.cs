@@ -1,6 +1,7 @@
 ﻿using LLCStroyCom.Domain.Entities;
 using LLCStroyCom.Domain.Exceptions;
 using LLCStroyCom.Domain.Repositories;
+using LLCStroyCom.Domain.Specifications.Companies;
 using LLCStroyCom.Infrastructure;
 using LLCStroyCom.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -327,7 +328,7 @@ public class CompanyRepositoryTests
     
         // Assert
         var updatedCompany = await context.Companies.FindAsync(companyId);
-        Assert.Equal("new_name", updatedCompany.Name);
+        Assert.Equal("new_name", updatedCompany!.Name);
     }
 
     [Fact]
@@ -365,5 +366,153 @@ public class CompanyRepositoryTests
         
         // Assert
         await Assert.ThrowsAsync<TaskCanceledException>(act);
+    }
+
+    [Fact]
+    public async Task ListAsync_WhenItemsLessThanMaxPageSize_ShouldReturnPaginationResultWithNoNextPage()
+    {
+        // Arrange
+        var context = GetInMemoryDbContext();
+        await context.Companies.AddAsync(new Company()
+        {
+            Id = Guid.NewGuid(),
+            Name = "name"
+        });
+        await context.SaveChangesAsync();
+        var repository = new CompanyRepository(context);
+        
+        const int maxPageSize = 2;
+        const int page = 1;
+        
+        // Act
+        var result = await repository.ListAsync(new CompanySpecification(new CompanyFilter()), maxPageSize, page);
+        
+        // Assert
+        Assert.NotEmpty(result.Items);
+        Assert.Equal(1, result.TotalCount);
+        Assert.Equal(1, result.PageCount);
+        Assert.False(result.HasNextPage);
+        Assert.False(result.HasPreviousPage);
+    }
+
+    [Fact]
+    public async Task ListAsync_WhenItemsEqualsMaxPageSize_ShouldReturnPaginationResultWithNoNextPage()
+    {
+        // Arrange
+        var context = GetInMemoryDbContext();
+        await context.Companies.AddAsync(new Company()
+        {
+            Id = Guid.NewGuid(),
+            Name = "name"
+        });
+        await context.SaveChangesAsync();
+        var repository = new CompanyRepository(context);
+        
+        const int maxPageSize = 1;
+        const int page = 1;
+        
+        // Act
+        var result = await repository.ListAsync(new CompanySpecification(new CompanyFilter()), maxPageSize, page);
+        
+        // Assert
+        Assert.NotEmpty(result.Items);
+        Assert.Equal(1, result.TotalCount);
+        Assert.Equal(1, result.PageCount);
+        Assert.False(result.HasNextPage);
+        Assert.False(result.HasPreviousPage);
+    }
+
+    [Fact]
+    public async Task ListAsync_WhenItemsMoreThanMaxPageSize_ShouldReturnPaginationResultWithNextPage()
+    {
+        // Arrange
+        var context = GetInMemoryDbContext();
+        await context.Companies.AddRangeAsync(
+            new Company()
+            {
+                Id = Guid.NewGuid(),
+                Name = "name"
+            },
+            new Company()
+            {
+                Id = Guid.NewGuid(),
+                Name = "name1"
+            });
+        await context.SaveChangesAsync();
+        var repository = new CompanyRepository(context);
+        
+        const int maxPageSize = 1;
+        const int page = 1;
+        
+        // Act
+        var result = await repository.ListAsync(new CompanySpecification(new CompanyFilter()), maxPageSize, page);
+        
+        // Assert
+        Assert.NotEmpty(result.Items);
+        Assert.Equal(2, result.TotalCount);
+        Assert.Equal(2, result.PageCount);
+        Assert.True(result.HasNextPage);
+        Assert.False(result.HasPreviousPage);
+    }
+
+    [Fact]
+    public async Task ListAsync_WhenNoItems_ShouldReturnEmptyPaginationResult()
+    {
+        // Arrange
+        const int maxPageSize = 10;
+        const int page = 1;
+        
+        // Act
+        var result = await _companyRepository.ListAsync(new CompanySpecification(new CompanyFilter()), maxPageSize, page);
+        
+        // Assert
+        Assert.Empty(result.Items);
+        Assert.Equal(0, result.TotalCount);
+        Assert.Equal(0, result.PageCount);
+        Assert.False(result.HasNextPage);
+        Assert.False(result.HasPreviousPage);
+    }
+
+    [Fact]
+    public async Task ListAsync_WhenOperationCanceled_ShouldThrowOperationCanceledException()
+    {
+        // Arrange
+        var cancellationToken = new CancellationToken(canceled: true);
+        
+        // Act
+        var act = () => _companyRepository.ListAsync(new CompanySpecification(new CompanyFilter()),
+            10, 1, cancellationToken);
+        
+        // Assert
+        await Assert.ThrowsAsync<OperationCanceledException>(act);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    [InlineData(46)]
+    public async Task ListAsync_WhenMaxPageSizeLessOrEqualToZero_ShouldThrowArgumentOutOfRangeException(int invalidMaxPageSize)
+    {
+        // Arrange
+        
+        // Act
+        var act = () => _companyRepository.ListAsync(new CompanySpecification(new CompanyFilter()), invalidMaxPageSize, 10);
+        
+        // Assert
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(act);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public async Task ListAsync_WhenPageLessOrEqualToZeroOrMoreThan45_ShouldThrowArgumentOutOfRangeException(int invalidPage)
+    {
+        // Arrange
+        
+        // Act
+        var act = () => _companyRepository.ListAsync(new CompanySpecification(new CompanyFilter()), invalidPage, 10);
+        
+        // Assert
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(act);
     }
 }

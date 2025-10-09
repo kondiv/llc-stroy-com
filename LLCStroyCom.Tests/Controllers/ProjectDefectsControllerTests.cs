@@ -1,10 +1,12 @@
 using LLCStroyCom.Api.Controllers;
 using LLCStroyCom.Domain.Dto;
 using LLCStroyCom.Domain.Enums;
+using LLCStroyCom.Domain.Models;
 using LLCStroyCom.Domain.Requests;
 using LLCStroyCom.Domain.ResultPattern;
 using LLCStroyCom.Domain.ResultPattern.Errors;
 using LLCStroyCom.Domain.Services;
+using LLCStroyCom.Domain.Specifications.Defects;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -237,5 +239,61 @@ public class ProjectDefectsControllerTests
         
         // Assert
         Assert.IsType<NotFoundObjectResult>(result);
+    }
+
+    [Fact]
+    public async Task ListAsync_WhenPaginationResultEmpty_ShouldReturnOkObjectResult()
+    {
+        // Arrange
+        var emptyPaginationResult = new PaginationResult<DefectDto>([], 1, 1, 0, 0);
+        _defectServiceMock
+            .Setup(x => x.ListAsync(It.IsAny<Guid>(), It.IsAny<DefectSpecification>(),
+                1, 1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(emptyPaginationResult);
+        
+        // Act
+        var result = await _controller.ListAsync(Guid.NewGuid(), new DefectFilter(), 1, 1);
+        
+        // Assert
+        var actualResult = Assert.IsType<OkObjectResult>(result.Result);
+        var value = Assert.IsType<PaginationResult<DefectDto>>(actualResult.Value);
+        Assert.Empty(value.Items);
+    }
+    
+    [Fact]
+    public async Task ListAsync_WhenPaginationResultNotEmpty_ShouldReturnOkObjectResult()
+    {
+        // Arrange
+        var paginationResult = new PaginationResult<DefectDto>([new DefectDto(Guid.NewGuid(), "name", "desc",
+            Status.New, new ProjectDto(Guid.NewGuid(), "name", "city", Guid.NewGuid(),
+                Status.InProgress, DateTimeOffset.UtcNow), null)], 1, 1, 0, 0);
+        _defectServiceMock
+            .Setup(x => x.ListAsync(It.IsAny<Guid>(), It.IsAny<DefectSpecification>(),
+                1, 1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(paginationResult);
+        
+        // Act
+        var result = await _controller.ListAsync(Guid.NewGuid(), new DefectFilter(), 1, 1);
+        
+        // Assert
+        var actualResult = Assert.IsType<OkObjectResult>(result.Result);
+        var value = Assert.IsType<PaginationResult<DefectDto>>(actualResult.Value);
+        Assert.NotEmpty(value.Items);
+    }
+
+    [Fact]
+    public async Task ListAsync_WhenArgumentOutOfRange_ShouldReturnBadRequestObjectResult()
+    {
+        // Arrange
+        _defectServiceMock
+            .Setup(x => x.ListAsync(It.IsAny<Guid>(), It.IsAny<DefectSpecification>(),
+                -23, 1, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ArgumentOutOfRangeException());
+        
+        // Act
+        var result = await _controller.ListAsync(Guid.NewGuid(), new DefectFilter(), -23, 1);
+        
+        // Assert
+        Assert.IsType<BadRequestObjectResult>(result.Result);
     }
 }

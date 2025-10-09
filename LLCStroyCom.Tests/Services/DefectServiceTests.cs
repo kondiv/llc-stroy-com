@@ -4,11 +4,13 @@ using LLCStroyCom.Application.Services;
 using LLCStroyCom.Domain.Dto;
 using LLCStroyCom.Domain.Entities;
 using LLCStroyCom.Domain.Enums;
+using LLCStroyCom.Domain.Models;
 using LLCStroyCom.Domain.Repositories;
 using LLCStroyCom.Domain.Requests;
 using LLCStroyCom.Domain.ResultPattern;
 using LLCStroyCom.Domain.ResultPattern.Errors;
 using LLCStroyCom.Domain.Services;
+using LLCStroyCom.Domain.Specifications.Defects;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -337,5 +339,53 @@ public class DefectServiceTests
         
         // Assert
         await Assert.ThrowsAsync<OperationCanceledException>(act);
+    }
+
+    [Fact]
+    public async Task ListAsync_WhenItemsNotEmpty_ShouldReturnDtoFotSameObjects()
+    {
+        // Arrange
+        var page = 1;
+        var maxPageSize = 1;
+        
+        var repositoryPaginationResult = new PaginationResult<Defect>(
+            new List<Defect>() { _validDefect },
+            page, maxPageSize, 1, 1);
+        
+        _defectRepositoryMock
+            .Setup(x => x.ListAsync(_validDefect.ProjectId, It.IsAny<DefectSpecification>(),
+                maxPageSize, page, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(repositoryPaginationResult);
+        
+        // Act
+        var result = await _defectService.ListAsync(_validDefect.ProjectId, new DefectSpecification(new DefectFilter()), maxPageSize, page);
+        
+        // Assert
+        Assert.NotEmpty(result.Items);
+        Assert.IsType<DefectDto>(result.Items.First());
+        Assert.Equal(repositoryPaginationResult.Page, result.Page);
+        Assert.Equal(repositoryPaginationResult.PageCount, result.PageCount);
+        Assert.Equal(repositoryPaginationResult.TotalCount, result.TotalCount);
+        Assert.Equal(repositoryPaginationResult.HasNextPage, result.HasNextPage);
+        Assert.Equal(repositoryPaginationResult.HasPreviousPage, result.HasPreviousPage);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public async Task ListAsync_WhenArgumentOutOfRange_ShouldThrowArgumentOutOfRangeException(int invalidPage)
+    {
+        // Arrange
+        _defectRepositoryMock
+            .Setup(x => x.ListAsync(It.IsAny<Guid>(), It.IsAny<DefectSpecification>(),
+                1, invalidPage, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ArgumentOutOfRangeException());
+        
+        // Act
+        var act = () => _defectService.ListAsync(Guid.NewGuid(), new DefectSpecification(new DefectFilter()),
+            1, invalidPage);
+        
+        // Assert
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(act);
     }
 }

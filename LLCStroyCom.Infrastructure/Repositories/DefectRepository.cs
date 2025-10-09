@@ -1,9 +1,12 @@
-﻿using LLCStroyCom.Domain.Entities;
+﻿using Ardalis.Specification.EntityFrameworkCore;
+using LLCStroyCom.Domain.Entities;
 using LLCStroyCom.Domain.Enums;
 using LLCStroyCom.Domain.Exceptions;
+using LLCStroyCom.Domain.Models;
 using LLCStroyCom.Domain.Repositories;
 using LLCStroyCom.Domain.ResultPattern;
 using LLCStroyCom.Domain.ResultPattern.Errors;
+using LLCStroyCom.Domain.Specifications.Defects;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 
@@ -27,6 +30,33 @@ public sealed class DefectRepository : IDefectRepository
             : Result<Defect>.Success(defect);
     }
 
+    public async Task<PaginationResult<Defect>> ListAsync(Guid projectId, DefectSpecification specification, int maxPageSize, int page,
+        CancellationToken cancellationToken = default)
+    {
+        if (maxPageSize is <= 0 or > 45)
+        {
+            throw new ArgumentOutOfRangeException(nameof(maxPageSize), maxPageSize, "The MaxSageSize must be greater than zero.");
+        }
+        if (page <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(page), page, "The Page must be greater than zero.");
+        }
+        
+        var query = _context.Defects.Where(d => d.ProjectId == projectId).AsQueryable();
+
+        var filteredQuery = SpecificationEvaluator.Default.GetQuery(query, specification);
+
+        var totalCount = await filteredQuery.CountAsync(cancellationToken);
+        var pageCount = (int)Math.Ceiling(totalCount / (double)maxPageSize);
+        
+        var items = await filteredQuery
+            .Skip((page - 1) * maxPageSize)
+            .Take(maxPageSize)
+            .ToListAsync(cancellationToken);
+        
+        return new PaginationResult<Defect>(items, page, maxPageSize, pageCount, totalCount);
+    }
+
     public async Task<Result<Defect>> CreateAsync(Defect defect, CancellationToken cancellationToken = default)
     {
         try
@@ -38,7 +68,7 @@ public sealed class DefectRepository : IDefectRepository
         catch (DbUpdateException e)
             when (e.InnerException is NpgsqlException { SqlState: PostgresErrorCodes.ForeignKeyViolation })
         {
-            return Result<Defect>.Failure(new DbUpdateError("Project id is missing"));
+            return Result<Defect>.Failure(new DbUpdateError("Project id is missing or project does not exist"));
         }
         catch (DbUpdateException e)
             when (e.InnerException is NpgsqlException { SqlState: PostgresErrorCodes.UniqueViolation })

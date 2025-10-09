@@ -33,7 +33,7 @@ public class CompanyProjectsControllerTests
     {
         // Arrange
         _projectServiceMock
-            .Setup(s => s.ListAsync(null, It.IsAny<ProjectFilter>(), It.IsAny<int>(),
+            .Setup(s => s.ListAsync(It.IsAny<Guid>(), null, It.IsAny<ProjectFilter>(), It.IsAny<int>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PaginatedProjectListResponse()
             {
@@ -47,7 +47,7 @@ public class CompanyProjectsControllerTests
         var query = new ProjectsQuery();
         
         // Act
-        var result = await _controller.ListAsync(query);
+        var result = await _controller.ListAsync(Guid.NewGuid(), query);
         
         // Assert
         Assert.IsType<ActionResult<PaginatedProjectListResponse>>(result);
@@ -70,7 +70,7 @@ public class CompanyProjectsControllerTests
     {
         // Arrange
         _projectServiceMock
-            .Setup(s => s.ListAsync(It.IsAny<string>(), It.IsAny<ProjectFilter>(), It.IsAny<int>(),
+            .Setup(s => s.ListAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<ProjectFilter>(), It.IsAny<int>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PaginatedProjectListResponse()
             {
@@ -84,7 +84,7 @@ public class CompanyProjectsControllerTests
         var query = new ProjectsQuery();
         
         // Act
-        var result = await _controller.ListAsync(query);
+        var result = await _controller.ListAsync(Guid.NewGuid(), query);
         
         // Assert
         Assert.IsType<ActionResult<PaginatedProjectListResponse>>(result);
@@ -105,14 +105,14 @@ public class CompanyProjectsControllerTests
     {
         // Arrange
         _projectServiceMock
-            .Setup(s => s.ListAsync(It.IsAny<string>(), It.IsAny<ProjectFilter>(), It.IsAny<int>(),
+            .Setup(s => s.ListAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<ProjectFilter>(), It.IsAny<int>(),
                 It.IsAny<CancellationToken>()))
             .ThrowsAsync(PageTokenEncodingException.ForToken("sd"));
         
         var query = new ProjectsQuery();
         
         // Act
-        var result = await _controller.ListAsync(query);
+        var result = await _controller.ListAsync(Guid.NewGuid(), query);
         
         // Assert
         Assert.IsType<BadRequestObjectResult>(result.Result);
@@ -123,14 +123,14 @@ public class CompanyProjectsControllerTests
     {
         // Arrange
         _projectServiceMock
-            .Setup(s => s.ListAsync(It.IsAny<string>(), It.IsAny<ProjectFilter>(), It.IsAny<int>(),
+            .Setup(s => s.ListAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<ProjectFilter>(), It.IsAny<int>(),
                 It.IsAny<CancellationToken>()))
             .ThrowsAsync(PageTokenDecodingException.ForToken("sd"));
         
         var query = new ProjectsQuery();
         
         // Act
-        var result = await _controller.ListAsync(query);
+        var result = await _controller.ListAsync(Guid.NewGuid(), query);
         
         // Assert
         Assert.IsType<BadRequestObjectResult>(result.Result);
@@ -141,14 +141,14 @@ public class CompanyProjectsControllerTests
     {
         // Arrange
         _projectServiceMock
-            .Setup(s => s.ListAsync(It.IsAny<string>(), It.IsAny<ProjectFilter>(), It.IsAny<int>(),
+            .Setup(s => s.ListAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<ProjectFilter>(), It.IsAny<int>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PaginatedProjectListResponse() { Projects = new List<ProjectDto>(), PageToken = null });
         
         var query = new ProjectsQuery();
         
         // Act
-        var result = await _controller.ListAsync(query);
+        var result = await _controller.ListAsync(Guid.NewGuid(), query);
         
         // Assert
         Assert.IsType<ActionResult<PaginatedProjectListResponse>>(result);

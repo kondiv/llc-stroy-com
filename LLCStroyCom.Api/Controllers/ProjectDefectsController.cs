@@ -1,7 +1,9 @@
 using LLCStroyCom.Domain.Dto;
+using LLCStroyCom.Domain.Models;
 using LLCStroyCom.Domain.Requests;
 using LLCStroyCom.Domain.ResultPattern.Errors;
 using LLCStroyCom.Domain.Services;
+using LLCStroyCom.Domain.Specifications.Defects;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
@@ -43,6 +45,32 @@ public class ProjectDefectsController : ControllerBase
             ErrorCode.NotFound => NotFound(result.Error.Message),
             _ => BadRequest(result.Error.Message)
         };
+    }
+
+    [Authorize]
+    [HttpGet]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<PaginationResult<DefectDto>>> ListAsync([FromRoute]Guid projectId, [FromQuery]DefectFilter filter,
+        [FromQuery]int maxPageSize = 20, [FromQuery]int page = 1, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Requesting defects of project {projectId}\nMax page size: {maxPageSize}\nPage: {page}",
+            projectId, maxPageSize, page);
+
+        try
+        {
+            var specification = new DefectSpecification(filter);
+
+            var result = await _defectService.ListAsync(projectId, specification, maxPageSize, page, cancellationToken);
+        
+            return Ok(result);
+        }
+        catch (ArgumentOutOfRangeException e)
+        {
+            _logger.LogError(e, e.Message);
+            return BadRequest(e.Message);
+        }
     }
 
     [Authorize]

@@ -1,7 +1,9 @@
 ﻿using LLCStroyCom.Domain.Dto;
 using LLCStroyCom.Domain.Exceptions;
+using LLCStroyCom.Domain.Models;
 using LLCStroyCom.Domain.Requests;
 using LLCStroyCom.Domain.Services;
+using LLCStroyCom.Domain.Specifications.Companies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
@@ -14,13 +16,11 @@ namespace LLCStroyCom.Api.Controllers;
 public class CompanyController : ControllerBase
 {
     private readonly ICompanyService _companyService;
-    private readonly IProjectService _projectService;
     private readonly ILogger<CompanyController> _logger;
 
-    public CompanyController(ICompanyService companyService, IProjectService projectService, ILogger<CompanyController> logger)
+    public CompanyController(ICompanyService companyService, ILogger<CompanyController> logger)
     {
         _companyService = companyService;
-        _projectService = projectService;
         _logger = logger;
     }
     [Authorize]
@@ -41,6 +41,32 @@ public class CompanyController : ControllerBase
         {
             _logger.LogWarning(e, e.Message);
             return NotFound(e.Message);
+        }
+    }
+
+    [Authorize]
+    [HttpGet]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<PaginationResult<CompanyDto>>> ListAsync(
+        [FromQuery] CompanyFilter filter,
+        [FromQuery] int maxPageSize = 20, [FromQuery] int page = 1, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Requesting list of companies.\nMax page size: {maxPageSize}\nPage: {page}",
+            maxPageSize, page);
+        try
+        {
+            var specification = new CompanySpecification(filter);
+        
+            var result = await _companyService.ListAsync(specification, maxPageSize, page, cancellationToken);
+        
+            return Ok(result);
+        }
+        catch (ArgumentOutOfRangeException e)
+        {
+            _logger.LogError(e, e.Message);
+            return BadRequest(e.Message);
         }
     }
     

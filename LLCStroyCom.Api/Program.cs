@@ -1,5 +1,7 @@
 using System.Reflection;
 using System.Text;
+using LLCStroyCom.Api.AuthorizationRequirements.Handlers;
+using LLCStroyCom.Api.AuthorizationRequirements.Requirements;
 using LLCStroyCom.Application.MapperProfiles;
 using LLCStroyCom.Application.Services;
 using LLCStroyCom.Application.Validators.Auth;
@@ -10,6 +12,7 @@ using LLCStroyCom.Infrastructure;
 using LLCStroyCom.Infrastructure.Repositories;
 using LLCStroyCom.Infrastructure.Seeders;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -72,6 +75,12 @@ builder.Services.AddScoped<ICompanyService, CompanyService>();
 builder.Services.AddSingleton<AuthenticationDataValidator>();
 
 #endregion
+
+builder.Services.AddTransient<IAuthorizationHandler, CompanyEmployeeHandler>();
+
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy("CompanyEmployee", policy =>
+        policy.Requirements.Add(new CompanyEmployeeRequirement()));
 
 builder.Services.AddAuthentication(options =>
     {

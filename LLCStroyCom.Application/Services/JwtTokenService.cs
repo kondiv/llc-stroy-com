@@ -43,7 +43,9 @@ public sealed class JwtTokenService : ITokenService
         var claims = new List<Claim>()
         {
             new(ClaimTypes.Email, user.Email),
-            new(ClaimTypes.Role, user.Role.Type)
+            new(ClaimTypes.Role, user.Role.Type),
+            new("Company", user.CompanyId.ToString() ?? string.Empty),
+            
         };
         
         var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Key));

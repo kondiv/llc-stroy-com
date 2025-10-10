@@ -91,7 +91,7 @@ public class CompanyController : ControllerBase
         }
     }
 
-    [Authorize]
+    [Authorize(Policy = "CompanyEmployee", Roles = "manager,observer")]
     [HttpPatch("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]

@@ -23,7 +23,7 @@ public class CompanyEmployeesController : ControllerBase
         _logger = logger;
     }
     
-    [Authorize]
+    [Authorize(Policy = "CompanyEmployee", Roles = "manager,observer")]
     [HttpGet("{employeeId:guid}", Name = "GetEmployee")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -70,7 +70,7 @@ public class CompanyEmployeesController : ControllerBase
         }
     }
     
-    [Authorize]
+    [Authorize(Policy = "CompanyEmployee", Roles = "manager,observer")]
     [HttpPost("{employeeId:guid}:hire")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -102,7 +102,7 @@ public class CompanyEmployeesController : ControllerBase
         }
     }
 
-    [Authorize]
+    [Authorize(Policy = "CompanyEmployee", Roles = "manager,observer")]
     [HttpDelete("{employeeId:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -128,7 +128,7 @@ public class CompanyEmployeesController : ControllerBase
         }
     }
 
-    [Authorize]
+    [Authorize(Policy = "CompanyEmployee", Roles = "manager,observer")]
     [HttpPatch("{employeeId:guid}")]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status405MethodNotAllowed)]
@@ -138,7 +138,7 @@ public class CompanyEmployeesController : ControllerBase
         return StatusCode(StatusCodes.Status405MethodNotAllowed);
     }
 
-    [Authorize]
+    [Authorize(Policy = "CompanyEmployee", Roles = "manager,observer")]
     [HttpPut("{employeeId:guid}")]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status405MethodNotAllowed)]

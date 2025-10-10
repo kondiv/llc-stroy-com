@@ -23,7 +23,7 @@ public class CompanyProjectsController : ControllerBase
         _logger = logger;
     }
     
-    [Authorize]
+    [Authorize(Policy = "CompanyEmployee")]
     [HttpGet("{projectId:guid}", Name = "GetProject")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -44,7 +44,7 @@ public class CompanyProjectsController : ControllerBase
         return Ok(result.Value);
     }
     
-    [Authorize]    
+    [Authorize(Policy = "CompanyEmployee")]  
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -66,7 +66,7 @@ public class CompanyProjectsController : ControllerBase
         }
     }
     
-    [Authorize]
+    [Authorize(Policy = "CompanyEmployee", Roles = "manager,observer")]
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -90,7 +90,7 @@ public class CompanyProjectsController : ControllerBase
         };
     }
 
-    [Authorize]
+    [Authorize(Policy = "CompanyEmployee", Roles = "manager,observer")]
     [HttpPatch("{projectId:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -116,7 +116,7 @@ public class CompanyProjectsController : ControllerBase
         };
     }
 
-    [Authorize]
+    [Authorize(Policy = "CompanyEmployee", Roles = "manager,observer")]
     [HttpDelete("{projectId:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
